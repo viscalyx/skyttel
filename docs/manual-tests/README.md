@@ -493,7 +493,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   KÖ-09 köar kastande vid nytt samtal och provar stopp under väntan.
 - [Röst och text i samma samtal](conversation-voice-text.md): skrivna svar
   med röst när mikrofonen är på, text när den är av, ordnad överlämning av
-  långa svar, kvarvarande samtalstext och artig uppläsning bara av nya
+  långa svar med väntan på föregående uppläsning, kvarvarande samtalstext
+  och artig uppläsning bara av nya
   textlevererade Skyttel-rader. Följ Alex blå cykel och dess väntande frågor
   genom lägesbyte och ljudavbrott. Granska cykeln, avbryt en sparbegäran
   och följ ett nytt bekräftat sparande till kartan och ändringshistoriken.

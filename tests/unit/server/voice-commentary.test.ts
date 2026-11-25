@@ -260,6 +260,33 @@ test('completed replies wait for preceding speech and release in order with curr
   scene.output.close();
 });
 
+test.each(['audible', 'silent'] as const)(
+  'the next reply can proceed after the %s playback idle interval',
+  { tags: ['technical'] },
+  (playback) => {
+    vi.useFakeTimers();
+    const scene = arrange();
+    scene.output.send('first', 'Första svaret.', () => true, undefined, undefined, { id: 'first' });
+    scene.output.send('second', 'Andra svaret.', () => true);
+
+    if (playback === 'audible') {
+      scene.output.speaker(true);
+      vi.advanceTimersByTime(15_000);
+      scene.output.speaker(false);
+      vi.advanceTimersByTime(1000);
+      scene.output.output(); // A late fragment restarts the quiet interval.
+    }
+    const idleMs = playback === 'audible' ? 2000 : 15_000;
+    vi.advanceTimersByTime(idleMs - 1);
+    scene.output.speaker(false);
+    expect(scene.spoken().map((event) => event.delegation_id)).toEqual(['first']);
+    vi.advanceTimersByTime(1);
+    scene.output.speaker(false);
+    expect(scene.spoken().map((event) => event.delegation_id)).toEqual(['first', 'second']);
+    scene.output.close();
+  },
+);
+
 test.each(['cancel', 'close'] as const)(
   'queued releases cannot escape %s',
   {

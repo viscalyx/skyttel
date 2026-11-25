@@ -98,7 +98,7 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
     await reasoning.getByRole('button', { name: 'GPT-6.1 Terra', exact: true }).click();
     await page
       .getByRole('dialog', { name: 'Modellval', exact: true })
-      .getByRole('radio', { name: 'GPT-6.1 Sol', exact: true })
+      .getByRole('radio', { name: 'GPT-6.2 Sol', exact: true })
       .click();
     await page.keyboard.press('Escape');
     await send(page, 'Beskriv garaget utan att ändra något.');
@@ -148,7 +148,7 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
       .click();
     const otherReasoning = other.getByRole('dialog', { name: 'Resonemangsnivå', exact: true });
     await otherReasoning.getByRole('button', { name: 'Medium', exact: true }).click();
-    await otherReasoning.getByRole('button', { name: 'GPT-6.1 Sol', exact: true }).click();
+    await otherReasoning.getByRole('button', { name: 'GPT-6.2 Sol', exact: true }).click();
     await other
       .getByRole('dialog', { name: 'Modellval', exact: true })
       .getByRole('radio', { name: 'GPT-6.1 Terra', exact: true })
@@ -166,7 +166,7 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
     await expect(log(other)).not.toContainText('Det andra samtalet gäller cykeln.');
     await expect(
       view(other).getByRole('button', {
-        name: 'Modell och resonemang: GPT-6.1 Sol, Låg',
+        name: 'Modell och resonemang: GPT-6.2 Sol, Låg',
         exact: true,
       }),
     ).toBeVisible();

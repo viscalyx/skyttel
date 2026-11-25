@@ -25,7 +25,7 @@ fallen anger formulär, samtal, profil eller administration.
 3. KOST-01 och KOST-02 börjar med Google-inloggning som Alex. Skapa
    **Kostnadsprov**, välj **Skriv till Skyttel**, **Nytt samtal** och
    **Godkänn och starta** i medgivanderutan. Öppna **Modell och resonemang**,
-   välj modellnamnet **GPT-6.1 Terra** och välj **GPT-6.1 Sol**. Vänta på
+   välj modellnamnet **GPT-6.1 Terra** och välj **GPT-6.2 Sol**. Vänta på
    **Valet är sparat** och stäng dialogen med Escape. Behåll nivån **Hög**.
    Kostnadsprovet använder Sols prisunderlag. KOST-03 och KOST-04 börjar
    utan hushåll.
@@ -507,7 +507,7 @@ launcher for each case. Never reuse a real installation for these controls.
 To generate Sol usage, choose **Skriv till Skyttel**, then **Nytt samtal**,
 select **Godkänn och starta** in the consent box, open **Modell och
 resonemang**, choose the model name **GPT-6.1 Terra**, and select
-**GPT-6.1 Sol**. Wait for **Valet är sparat**, close with Escape, and send
+**GPT-6.2 Sol**. Wait for **Valet är sparat**, close with Escape, and send
 **Prova kostnadsunderlaget.** The fixed response is
 **Det kontrollerade kostnadsprovet är klart.** No map change is proposed.
 

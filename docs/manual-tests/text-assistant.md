@@ -257,7 +257,7 @@ TEXT-18.
    släpper nu felet. Läs att modellen är tillfälligt otillgänglig, att
    återstående arbete och kö väntar och att utkastet finns kvar. Öppna
    utkastet och läs Lo Lind med oförändrad beskrivning.
-3. Öppna **Modell och resonemang**, välj **GPT-6.1 Sol** och **Medium**,
+3. Öppna **Modell och resonemang**, välj **GPT-6.2 Sol** och **Medium**,
    och stäng dialogerna. Läs det nya valet. Inget arbete startar av valet.
 4. Nå **Försök igen** med tangentbord och aktivera knappen. Operatören
    lämnar först samma Lo-förslag tillsammans med Mira och släpper sedan

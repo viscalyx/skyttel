@@ -1300,7 +1300,7 @@ känt uppdrag. Detta bevisar inte verkliga modellers kontextgränser.
 4. Vänta tills Skyttel har talat färdigt innan röstanslutningen förnyas.
    Slå på mikrofonen, vänta på röstanslutningen och slå av mikrofonen.
 5. Öppna Modell och resonemang, öppna modellvalet via modellnamnet och
-   välj GPT-6.1 Sol. Vänta på ”Valet är sparat” och stäng dialogen med Escape.
+   välj GPT-6.2 Sol. Vänta på ”Valet är sparat” och stäng dialogen med Escape.
 6. Skriv ”Vad väntar exakt?”. Läs den återgivna begäran och samtalets
    ursprungliga begäran. Öppna utkastet och läs Lo Exempel.
 
@@ -2120,7 +2120,7 @@ och verifierar sjudygnsgränsen genom verklig omstart.
 **Steg:**
 
 1. Öppna **Modell och resonemang** vid textfältet, välj **Låg**, öppna
-   modellnamnet och välj **GPT-6.1 Sol**. Stäng dialogen med Escape.
+   modellnamnet och välj **GPT-6.2 Sol**. Stäng dialogen med Escape.
 2. Skriv **Byt cykelns namn till Blå, men ändra inte ägaren.** och välj
    **Skicka**. Släpp den kontrollerade frågan enligt förberedelsen.
    Läs **Vilken cykel?** i samtalstexten.
@@ -2129,7 +2129,7 @@ och verifierar sjudygnsgränsen genom verklig omstart.
    men ändra eller spara ingenting.** medan arbetet pågår.
 4. Ladda om och öppna textvyn. Den är tom. Välj **Samtal** och välj
    cykelns begäran. Läs instruktionen, frågan, det köade meddelandet,
-   utgångstiden och modellvalet **GPT-6.1 Sol, Låg**.
+   utgångstiden och modellvalet **GPT-6.2 Sol, Låg**.
 5. Logga ut via **Din profil** och logga in med Google igen. Öppna
    samtalet från listan. Kör `restart` i terminalen, invänta `restarted`
    och upprepa omladdning och val. Kontrollera att modellens kö är tyst.
@@ -2327,7 +2327,7 @@ batchsvaret efter genomförandet och verifierar samma utfall efter omstart.
 
 1. I första profilen: välj **Skriv till Skyttel → Nytt samtal** och
    godkänn aktuellt medgivande utan att spara det. Välj **Låg** i
-   resonemangsdialogen och **GPT-6.1 Sol** i modelldialogen. Skicka
+   resonemangsdialogen och **GPT-6.2 Sol** i modelldialogen. Skicka
    **Beskriv garaget utan att ändra något.**. Läs **Vilket garage?**.
 2. Öppna **Samtal**. Läs utdraget från begäran och släpp titeln enligt
    förberedelsen. Öppna **Samtalsinformation** med Enter. Läs titeln,
@@ -2340,7 +2340,7 @@ batchsvaret efter genomförandet och verifierar samma utfall efter omstart.
    Starta ett nytt textsamtal. Välj **Medium** och **GPT-6.1 Terra**.
    Skicka **Beskriv cykeln utan att ändra något.** och läs cykelsvaret.
 5. Skriv en anteckning utan att skicka den. Välj garaget med Enter.
-   Kontrollera frågan, **GPT-6.1 Sol, Låg** och anteckningen. Slå på
+   Kontrollera frågan, **GPT-6.2 Sol, Låg** och anteckningen. Slå på
    mikrofonen och säg **Det västra garaget.** enligt förberedelsen.
    Läs **Garaget heter Västra.**.
 6. Välj cykelsamtalet. Mikrofonen stängs av och cykelsamtalets svar

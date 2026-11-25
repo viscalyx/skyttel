@@ -34,7 +34,15 @@ test('historical Terra rates and new Sol rates coexist without repricing old usa
       long: { input: 4, cached: 0.4, cacheWrite: 5, output: 18 },
     },
   };
-  const attempts = [legacy, currentRates].map((rates, index) => ({
+  const earlierSol = {
+    ...currentRates,
+    id: 'openai-sol-2026-10-12',
+    model: 'gpt-6.1-sol',
+    sources: [
+      { title: 'GPT-6.1 Sol', url: 'https://developers.openai.com/api/docs/models/gpt-6.1-sol' },
+    ],
+  };
+  const attempts = [legacy, earlierSol, currentRates].map((rates, index) => ({
     id: String(index),
     kind: 'terra' as const,
     month: '2026-10',
@@ -42,7 +50,7 @@ test('historical Terra rates and new Sol rates coexist without repricing old usa
     endedAt: '2026-10-12T00:00:01Z',
     measurement: JSON.stringify({
       kind: 'terra',
-      model: index ? 'gpt-6.1-sol' : 'gpt-5.6-terra',
+      model: rates.model ?? 'gpt-5.6-terra',
       tier: 'default',
       outcome: 'completed',
       usage: { input: 100000, cached: 20000, cacheWrite: 10000, output: 5000, reasoning: 2000 },
@@ -50,9 +58,14 @@ test('historical Terra rates and new Sol rates coexist without repricing old usa
     rates: JSON.stringify(rates),
   }));
   const result = summarizeAttempts(attempts, 10);
-  expect(result.terra.estimatedUsd).toBeCloseTo(0.229 + 0.217, 10);
+  expect(result.terra.estimatedUsd).toBeCloseTo(0.229 + 2 * 0.217, 10);
   expect(result.terra.unpricedAttempts).toBe(0);
-  expect(result.rates).toHaveLength(2);
+  expect(result.rates.map((rate) => rate.model)).toEqual([
+    undefined,
+    'Sol (historisk prislista)',
+    'gpt-6.2-sol',
+  ]);
+  expect(JSON.stringify(result.rates)).not.toMatch(/gpt-6\.1[ -]sol/i);
 });
 const headers = () => ({ origin: app.origin });
 // The independent synthetic title reports eight input and two output tokens.
@@ -89,7 +102,7 @@ async function setup(
     (
       await browser.post(`${path}/${assistant.id}/model-choice`, {
         headers: headers(),
-        data: { model: 'gpt-6.1-sol', effort: 'high' },
+        data: { model: 'gpt-6.2-sol', effort: 'high' },
       })
     ).status(),
   ).toBe(200);

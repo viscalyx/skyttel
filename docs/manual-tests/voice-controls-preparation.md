@@ -1202,9 +1202,13 @@ efter fallet och avsluta med `quit`.
 
 1. Skicka **Första frågan.** och **Andra frågan.** utan att släppa svar. Släpp
    första svaret med **Första svaret med åäö.**, upprepat 30 gånger i samma
-   svar. Släpp sedan **Andra svaret.** och läs `sessions`. Sammanfoga
-   delarna för varje svar enligt [TAL-04](#tidslinje-tal-04). Kontrollera
-   två fullständiga svar i ordning och ett uppspelningsbesked per svar.
+   svar. Släpp **Andra svaret.** innan något ljud har spelats. Läs `sessions`
+   och kontrollera att bara det första svaret har ett uppspelningsbesked.
+   Skicka det första svaret som utgående textfragment och slå på inkommande
+   ljud enligt [TAL-04](#tidslinje-tal-04). Kontrollera att det andra svaret
+   fortfarande väntar. Slå av ljudet och kontrollera att nästa
+   uppspelningsbesked gäller **Andra svaret.**.
+   Sammanfoga delarna enligt TAL-04 och kontrollera båda svarens fulla text.
 2. Skicka **Ett talat tillägg.** som transportfragment och slå på och av
    ljudaktiviteten. Läs raden i samtalstexten.
 3. Stäng av mikrofonen. Skicka **Min egen text ska inte läsas.** och släpp

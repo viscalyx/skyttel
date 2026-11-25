@@ -165,7 +165,7 @@ test.each([
     expect(await read()).toEqual(before);
     const failedCalls = calls;
     expect(
-      (await post(`${endpoint}/model-choice`, { model: 'gpt-6.1-sol', effort: 'medium' })).status(),
+      (await post(`${endpoint}/model-choice`, { model: 'gpt-6.2-sol', effort: 'medium' })).status(),
     ).toBe(200);
     view = await (await browser.get(endpoint)).json();
     expect(view.queuedMessages).toBe(2);
@@ -191,7 +191,7 @@ test.each([
     );
     if (action === 'retry') expect(resumedInputs[0].messageId).toBe(requestId);
     expect(
-      resumed.every((body) => body.model === 'gpt-6.1-sol' && body.reasoning.effort === 'medium'),
+      resumed.every((body) => body.model === 'gpt-6.2-sol' && body.reasoning.effort === 'medium'),
     ).toBe(true);
     expect(view.workFailure).toBeUndefined();
     expect((await read()).draft).toMatchObject(
@@ -1274,7 +1274,7 @@ test.each(['retry', 'abandon', 'stop'] as const)(
       });
     expect(workCalls).toBe(1);
     expect(
-      (await post(`${endpoint}/model-choice`, { model: 'gpt-6.1-sol', effort: 'medium' })).status(),
+      (await post(`${endpoint}/model-choice`, { model: 'gpt-6.2-sol', effort: 'medium' })).status(),
     ).toBe(200);
     await browser.get(endpoint);
     expect(workCalls).toBe(1);
@@ -1337,7 +1337,7 @@ test.each(['retry', 'abandon', 'stop'] as const)(
       .toEqual(['ready', 0]);
     expect(workCalls).toBe(action === 'retry' ? 3 : 2);
     expect(model.requests.map((body) => [body.model, body.reasoning.effort])).toEqual(
-      Array.from({ length: action === 'retry' ? 2 : 1 }, () => ['gpt-6.1-sol', 'medium']),
+      Array.from({ length: action === 'retry' ? 2 : 1 }, () => ['gpt-6.2-sol', 'medium']),
     );
     expect(
       view.conversation?.filter(

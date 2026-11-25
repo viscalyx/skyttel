@@ -31,11 +31,11 @@ async function startAssistant(page: Page, origin: string) {
     .getByRole('button', { name: 'GPT-6.1 Terra', exact: true })
     .click();
   const models = page.getByRole('dialog', { name: 'Modellval', exact: true });
-  await models.getByRole('radio', { name: 'GPT-6.1 Sol', exact: true }).click();
+  await models.getByRole('radio', { name: 'GPT-6.2 Sol', exact: true }).click();
   await expect(models.getByRole('status')).toContainText('Valet är sparat');
   await page.keyboard.press('Escape');
   await expect(
-    page.getByRole('button', { name: 'Modell och resonemang: GPT-6.1 Sol, Hög', exact: true }),
+    page.getByRole('button', { name: 'Modell och resonemang: GPT-6.2 Sol, Hög', exact: true }),
   ).toBeVisible();
   return household.id as string;
 }
@@ -105,19 +105,19 @@ test('KOST-01: separata kostnader och månadens antaganden återläses efter oms
       .getByText(/Modellpriser kontrollerade/)
       .click();
     await expect(
-      page.getByRole('table', { name: 'gpt-6.1-sol – priser per miljon token' }),
+      page.getByRole('table', { name: 'gpt-6.2-sol – priser per miljon token' }),
     ).toBeVisible();
     const rates = category(page, 'Prisunderlag');
-    await expect(rates).toContainText('Modellpriser kontrollerade 2026-10-12');
+    await expect(rates).toContainText('Modellpriser kontrollerade 2026-11-25');
     await expect(rates).toContainText('0,05 USD/minut, beräknat per sekund');
     await expect(rates).toContainText('Startkrediten antas ingå i dessa sekunder');
     await expect(rates.getByRole('link', { name: 'GPT-Live', exact: true })).toHaveAttribute(
       'href',
       'https://developers.openai.com/api/docs/models/gpt-live-1',
     );
-    await expect(rates.getByRole('link', { name: 'GPT-6.1 Sol', exact: true })).toHaveAttribute(
+    await expect(rates.getByRole('link', { name: 'GPT-6.2 Sol', exact: true })).toHaveAttribute(
       'href',
-      'https://developers.openai.com/api/docs/models/gpt-6.1-sol',
+      'https://developers.openai.com/api/docs/models/gpt-6.2-sol',
     );
     await page.getByText('Ändra månadens antaganden', { exact: true }).click();
     await page.getByLabel('SEK per USD', { exact: true }).fill('11');

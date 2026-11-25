@@ -21,14 +21,14 @@ const rows: RetainedConversation[] = [
     createdAt: Date.UTC(2026, 9, 1),
     expiresAt: Date.UTC(2026, 11, 1),
     paused: false,
-    modelChoice: { model: 'gpt-6.1-sol', effort: 'high' },
+    modelChoice: { model: 'gpt-6.2-sol', effort: 'high' },
   },
   {
     id: 'previous',
     title: 'Tidigare samtal',
     expiresAt: Date.UTC(2026, 10, 1),
     paused: true,
-    modelChoice: { model: 'gpt-6.1-sol', effort: 'high' },
+    modelChoice: { model: 'gpt-6.2-sol', effort: 'high' },
   },
 ];
 

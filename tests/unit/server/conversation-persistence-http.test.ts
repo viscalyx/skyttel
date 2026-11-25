@@ -1,4 +1,6 @@
+import { join } from 'node:path';
 import { type APIRequestContext, request } from '@playwright/test';
+import Database from 'better-sqlite3';
 import { afterEach, expect, test } from 'vitest';
 import type { AssistantObservation } from '../../../src/server/assistant-observation.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
@@ -124,7 +126,7 @@ test('actual restart restores the exact conversation and choice without starting
   expect(started.status(), await started.text()).toBe(201);
   let state: TextAssistantView = await started.json();
   const choice = await post(`${path}/${state.id}/model-choice`, {
-    model: 'gpt-6.1-sol',
+    model: 'gpt-6.2-sol',
     effort: 'low',
   });
   expect(choice.status(), await choice.text()).toBe(200);
@@ -145,11 +147,21 @@ test('actual restart restores the exact conversation and choice without starting
     .not.toBe('working');
   const before = model.requests.length;
   await restart();
+  // Restore settings and completed-task snapshots written by the previous application.
+  const fixture = new Database(join(app.directory, 'skyttel.db'));
+  try {
+    fixture.prepare('UPDATE conversation_model_preferences SET model = ?').run('gpt-6.1-sol');
+    fixture
+      .prepare('UPDATE conversation SET state = replace(state, ?, ?) WHERE id = ?')
+      .run('"gpt-6.2-sol"', '"gpt-6.1-sol"', state.id);
+  } finally {
+    fixture.close();
+  }
   const restored = await browser.get(`${path}/${state.id}`);
   expect(restored.status(), await restored.text()).toBe(200);
   expect(await restored.json()).toMatchObject({
     id: state.id,
-    modelChoice: { model: 'gpt-6.1-sol', effort: 'low' },
+    modelChoice: { model: 'gpt-6.2-sol', effort: 'low' },
     paused: true,
     conversation: [
       { role: 'user', text: 'Byt cykelns namn till Blå, men ändra inte ägaren.' },
@@ -161,7 +173,13 @@ test('actual restart restores the exact conversation and choice without starting
   expect(task).toBeDefined();
   const taskStatus = await browser.get(`${path}/${state.id}/messages/${task?.id}`);
   expect(taskStatus.status(), await taskStatus.text()).toBe(200);
-  expect(await taskStatus.json()).toMatchObject({ paused: true, phase: 'ready' });
+  expect(await taskStatus.json()).toMatchObject({
+    paused: true,
+    phase: 'ready',
+    modelChoice: { model: 'gpt-6.2-sol', effort: 'low' },
+  });
+  const next = await post(path, approvedForVisit);
+  expect(await next.json()).toMatchObject({ modelChoice: { model: 'gpt-6.2-sol', effort: 'low' } });
 });
 
 test.each(['start', 'restore'] as const)(

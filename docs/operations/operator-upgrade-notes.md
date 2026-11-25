@@ -135,7 +135,8 @@ request is registered.
 ### Check conversation model access and activation
 
 Before rollout, confirm that the installation's OpenAI project can use
-GPT-6.1 Terra and GPT-6.1 Sol at the enabled reasoning levels. Users without
+GPT-6.1 Terra and GPT-6.2 Sol at the enabled reasoning levels. Existing Sol
+settings automatically select the new version at the same level. Users without
 a saved personal choice start with Terra at high reasoning. Set the enabled
 combinations before opening access; an unavailable default stays selected
 until the user chooses another option. Activation does not prove account
@@ -612,10 +613,9 @@ authorize replay or new work.
 
 ### Conversation model
 
-The application uses GPT-6.1 Sol with high reasoning effort for text,
-voice backend work and conversation summaries. Before rollout, confirm that
-the configured OpenAI project permits this model. Monitor response times and
-spending after rollout. GPT-Live 1 continues to handle speech.
+The selected model and reasoning level apply to text, voice backend work
+and conversation summaries. Monitor response times and spending after
+rollout. GPT-Live 1 handles speech.
 
 New text model usage uses Sol prices. Earlier measurements keep their saved
 prices. The cost page combines text model usage and shows the model for each

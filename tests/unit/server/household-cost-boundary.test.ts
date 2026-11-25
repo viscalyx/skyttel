@@ -28,7 +28,7 @@ test('current household archives reimport without replacing or transferring inst
       (
         await owner.post(`${path}/text-assistant/${assistant.id}/model-choice`, {
           headers,
-          data: { model: 'gpt-6.1-sol', effort: 'high' },
+          data: { model: 'gpt-6.2-sol', effort: 'high' },
         })
       ).status(),
     ).toBe(200);

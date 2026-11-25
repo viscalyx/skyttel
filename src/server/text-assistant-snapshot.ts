@@ -1,4 +1,5 @@
 import type { TextAssistantView } from '../shared/text-assistant.js';
+import { currentModelChoice } from './conversation-model.js';
 
 type RecoveryView = Pick<
   TextAssistantView,
@@ -39,6 +40,8 @@ export function restoreAssistantResult(
 ): TextAssistantView {
   return {
     ...snapshot.view,
+    modelChoice: snapshot.view.modelChoice && currentModelChoice(snapshot.view.modelChoice),
+    enabledModelChoices: snapshot.view.enabledModelChoices?.map(currentModelChoice),
     paused: current.paused,
     expiresAt: current.expiresAt,
     conversation: current.conversation,

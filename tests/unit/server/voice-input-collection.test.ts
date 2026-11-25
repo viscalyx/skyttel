@@ -168,6 +168,37 @@ test('a typed reply becomes voiced only after acknowledgement and preceding spee
   work.retire();
 });
 
+test('two complete replies retain the first playback until the browser confirms it', {
+  tags: ['technical'],
+}, () => {
+  const { work, channel, initial, delivered, response } = arrange(true);
+  work.answer({
+    ...initial,
+    revision: 2,
+    completedReplies: [
+      { id: 'first', revision: 1, source: 'text', text: 'Det första svaret.' },
+      { id: 'second', revision: 2, source: 'text', text: 'Det andra svaret.' },
+    ],
+  });
+  for (const [event] of [...channel.send.mock.calls])
+    if (event.type === 'session.thinking.append')
+      channel.emit('session.thinking.appended', { client_event_id: event.event_id });
+  const firstId = `${initial.id}:1`;
+  expect(delivered.mock.calls).toEqual([[{ id: 'first', voiced: true }]]);
+  expect(response.mock.lastCall?.[0]).toMatchObject({ id: firstId });
+  work.speaker(false);
+  work.speaker(true);
+  work.speaker(false);
+  expect(delivered).toHaveBeenCalledTimes(1);
+  work.confirmInput(0, firstId);
+  expect(delivered.mock.calls).toEqual([
+    [{ id: 'first', voiced: true }],
+    [{ id: 'second', voiced: true }],
+  ]);
+  expect(response.mock.lastCall?.[0]).toMatchObject({ id: `${initial.id}:2` });
+  work.retire();
+});
+
 test('a delegation inside a word waits for the late suffix and delivers the complete answer', {
   tags: ['technical'],
 }, async () => {

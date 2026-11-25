@@ -65,7 +65,7 @@ test('KONTEXT-24: avbrutet samtal kan väljas igen efter omladdning och nytt sam
     await expect(reasoning.getByRole('slider')).toHaveAttribute('aria-valuetext', 'Låg');
     await reasoning.getByRole('button', { name: 'GPT-6.1 Terra', exact: true }).click();
     const models = page.getByRole('dialog', { name: 'Modellval', exact: true });
-    await models.getByRole('radio', { name: 'GPT-6.1 Sol', exact: true }).click();
+    await models.getByRole('radio', { name: 'GPT-6.2 Sol', exact: true }).click();
     await expect(models.getByRole('status')).toContainText('Valet är sparat');
     await page.keyboard.press('Escape');
     await text.getByRole('textbox', { name: 'Meddelande till Skyttel' }).fill(instruction);
@@ -95,7 +95,7 @@ test('KONTEXT-24: avbrutet samtal kan väljas igen efter omladdning och nytt sam
     await expect(log.getByRole('button', { name: 'Fortsätt arbetet' })).toBeVisible();
     await expect(text.getByLabel('Samtalets livslängd')).toContainText('Löper ut');
     await expect(
-      text.getByRole('button', { name: 'Modell och resonemang: GPT-6.1 Sol, Låg', exact: true }),
+      text.getByRole('button', { name: 'Modell och resonemang: GPT-6.2 Sol, Låg', exact: true }),
     ).toBeVisible();
     await expect(log).not.toContainText('Skyttel arbetar…');
     await openProfile(page);

@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3';
+import { currentModelChoice } from './conversation-model.js';
 import { type ConversationState, discardConversationDraftParts } from './conversation-state.js';
 import { MapError } from './map-error.js';
 import { pendingParts } from './pending-parts.js';
@@ -199,6 +200,9 @@ export function conversationStorage(database: Database.Database, now: () => numb
           throw new Error('invalid_conversation');
         return {
           ...stored,
+          modelChoice: currentModelChoice(stored.modelChoice),
+          pendingSummaryChoice:
+            stored.pendingSummaryChoice && currentModelChoice(stored.pendingSummaryChoice),
           accepted: new Map(stored.accepted),
           pendingPartsLedger: {
             ...stored.pendingPartsLedger,

@@ -179,7 +179,7 @@ test('another device discovers separate retained conversations and opens the sel
   };
   const original = await start();
   const chosen = await post(first, `${path}/${original.id}/model-choice`, {
-    model: 'gpt-6.1-sol',
+    model: 'gpt-6.2-sol',
     effort: 'low',
   });
   expect(chosen.status(), await chosen.text()).toBe(200);
@@ -238,7 +238,7 @@ test('another device discovers separate retained conversations and opens the sel
     id: original.id,
     paused: true,
     expiresAt: completed.expiresAt,
-    modelChoice: { model: 'gpt-6.1-sol', effort: 'low' },
+    modelChoice: { model: 'gpt-6.2-sol', effort: 'low' },
     conversation: [
       { role: 'user', text: 'Beskriv mitt garage utan att ändra något.' },
       { role: 'assistant', text: 'Jag väntar på ditt nästa uppdrag.' },

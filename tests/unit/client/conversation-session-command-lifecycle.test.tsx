@@ -13,7 +13,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const choice = { model: 'gpt-6.1-sol', effort: 'high' } as const;
+const choice = { model: 'gpt-6.2-sol', effort: 'high' } as const;
 
 test('a rejected model choice preserves the current conversation and a later confirmed choice applies', async () => {
   let accepted = false;

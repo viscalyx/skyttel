@@ -393,8 +393,14 @@ test('RÖSTTEXT-03: köns skrivna svar överlämnas till rösten en gång och sa
     const first = 'Första svaret med åäö. '.repeat(30).trim();
     held[0]([modelMessage(first)]);
     await expect.poll(() => held.length).toBe(2);
+    await expectVoiceRelease(live, first);
     held[1]([modelMessage('Andra svaret.')]);
     await expect.poll(() => voiceAnswerParts(live.sent).join('')).toContain('Andra svaret.');
+    expect(commentary()).toHaveLength(1);
+    await output(page, first);
+    await expect(voiceBox(page)).toHaveText('Skyttel talar');
+    expect(commentary()).toHaveLength(1);
+    await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
     // Long replies arrive as silent parts followed by one command to speak.
     const content = voiceAnswerParts(live.sent).join('');
     await expect.poll(() => commentary().length).toBe(2);

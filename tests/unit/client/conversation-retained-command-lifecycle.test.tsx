@@ -21,7 +21,7 @@ const retained = [
     title: 'Ett tidigare privat ärende',
     expiresAt: 2_000_000_000_000,
     paused: true,
-    modelChoice: { model: 'gpt-6.1-sol', effort: 'high' },
+    modelChoice: { model: 'gpt-6.2-sol', effort: 'high' },
   },
 ];
 const earlier = {

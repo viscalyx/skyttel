@@ -15,7 +15,7 @@ I ett pågående samtal öppnar ikonen **Modell och resonemang** ovanför
 meddelandefältet och till höger om röstindikatorn samma val. Dialogens
 slider har stegen **Låg**, **Medium** och **Hög**. Använd piltangenterna
 eller de tre knapparna för att välja utan att dra. Modellnamnet öppnar
-ett separat val mellan **GPT-6.1 Terra** och **GPT-6.1 Sol**. Modellbyte
+ett separat val mellan **GPT-6.1 Terra** och **GPT-6.2 Sol**. Modellbyte
 behåller resonemangsnivån. Escape eller **Stäng** återför fokus till
 kontrollen som öppnar dialogen utan att avbryta pågående eller köat arbete.
 

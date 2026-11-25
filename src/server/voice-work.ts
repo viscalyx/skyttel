@@ -145,7 +145,7 @@ export function voiceWork({
   const delegations = new Set<string>();
   const answered = new Set<number>([initial.revision]);
   const answeredReplies = new Set((initial.completedReplies ?? []).map((reply) => reply.id));
-  const commentary = voiceCommentary(channel, (event) => observe?.('voice_event', event));
+  const commentary = voiceCommentary(channel, (event) => observe?.('voice_event', event), now);
 
   function rememberQuestion(view: TextAssistantView) {
     if (view.revision < questionRevision) return;
@@ -302,22 +302,9 @@ export function voiceWork({
     // that a person heard it. No transcript/audio is logged or persisted here.
     const task = generation;
     const acceptedInput = inputVersion;
-    commentary.send(
-      delegationId,
-      answer,
-      () =>
-        !stopped &&
-        allowed() &&
-        generation === task &&
-        (Boolean(view?.receipt) || inputVersion === acceptedInput),
-      view && !view.receipt && view.phase === 'ready' && !view.saveCheck
-        ? 'unconfirmed'
-        : undefined,
-      settled,
-    );
-    if (!view) return;
-    answered.add(view.revision);
-    if (publishResponse) {
+    if (view) answered.add(view.revision);
+    function publish() {
+      if (!view || !publishResponse) return;
       const id = `${view.id}:${view.revision}`;
       const conversationalText =
         typeof answer !== 'string' &&
@@ -350,6 +337,23 @@ export function voiceWork({
         conversationalText,
       });
     }
+    commentary.send(
+      delegationId,
+      answer,
+      () =>
+        !stopped &&
+        allowed() &&
+        generation === task &&
+        (Boolean(view?.receipt) || inputVersion === acceptedInput),
+      view && !view.receipt && view.phase === 'ready' && !view.saveCheck
+        ? 'unconfirmed'
+        : undefined,
+      settled,
+      view && confirmBrowserInput
+        ? { id: `${view.id}:${view.revision}`, prepare: publish }
+        : undefined,
+    );
+    if (!confirmBrowserInput) publish();
   }
   function completion(view: VoiceCompletionView): VoiceAnswer {
     if (view.saveCheck) return view.saveCheck.reply + (view.receipt ? ' Sparat.' : '');
@@ -717,6 +721,7 @@ export function voiceWork({
     if (role === 'user' && event.end_ms <= interruptedThrough) return;
     let startTranscriptUtterance: ((requestId?: string) => void) | undefined;
     if (event.delta) {
+      if (role === 'assistant') commentary.output();
       const utteranceStart = transcriptBoundaries.append(role, event.start_ms, event.end_ms, {
         newUtterance: role === 'user' && nextUserUtterance,
       });
@@ -724,8 +729,11 @@ export function voiceWork({
       if (role === 'user') nextUserUtterance = false;
     }
     if (role === 'user') {
-      if (event.delta.trim()) refusal?.(undefined);
       inputVersion++;
+      if (event.delta.trim()) {
+        refusal?.(undefined);
+        commentary.userSpeech();
+      }
       lastInputAt = now();
       input?.(true, event.delta);
       anchor ??= { ...rendered };
@@ -947,6 +955,7 @@ export function voiceWork({
       if (!confirmBrowserInput) return undefined;
       if (precedingResponse && playedResponseId === precedingResponse.id)
         precedingResponse.acknowledged = true;
+      commentary.played(playedResponseId);
       if (typeof version === 'number' && Number.isSafeInteger(version) && version <= inputVersion) {
         confirmedInput = Math.max(confirmedInput, version);
         settleEarlyDelegation();

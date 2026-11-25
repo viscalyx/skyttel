@@ -221,8 +221,8 @@ resurser separat. Utför arbetsflödet en gång.
 
 1. Skicka **Första frågan.** och **Andra frågan.** utan att släppa svaren. Läs
    köbeskedet.
-2. Låt förberedelsens hela upprepade första svar och sedan **Andra svaret.**
-   komma. Läs båda i ordning.
+2. Låt båda svaren bli klara innan ljudet börjar. Spela upp det upprepade
+   första svaret. Låt det spela färdigt och läs båda svaren i ordning.
 3. Låt **Ett talat tillägg.** och inkommande aktivitet tillkomma. Läs den
    vanliga Skyttel-raden.
 4. Stäng av mikrofonen och skicka **Min egen text ska inte läsas.**. Fokusera
@@ -233,9 +233,10 @@ resurser separat. Utför arbetsflödet en gång.
 
 **Förväntat resultat:**
 
-- Ett meddelande väntar bakom det första. Båda fullständiga svaren överlämnas en
-  gång och i ordning. Å, ä och ö bevaras över svarens paketgränser. Båda
-  svaren finns i samtalstexten.
+- Ett meddelande väntar bakom det första. Båda fullständiga svaren överlämnas
+  en gång och i ordning. Det andra svaret väntar tills den första
+  uppläsningen är klar. Å, ä och ö bevaras över svarens paketgränser.
+  Båda svaren finns i samtalstexten.
 - Det talade tillägget finns som vanlig Skyttel-rad. Statusen för hjälpmedel
   erbjuder aldrig användarens egna rader eller svar som Skyttel säger med
   rösten.

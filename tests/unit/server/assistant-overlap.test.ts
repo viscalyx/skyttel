@@ -40,7 +40,7 @@ async function selectPricedModel(flow: { path: string; session: TextAssistantVie
     (
       await client.post(`${flow.path}/text-assistant/${flow.session.id}/model-choice`, {
         headers: { origin: app.origin },
-        data: { model: 'gpt-6.1-sol', effort: 'high' },
+        data: { model: 'gpt-6.2-sol', effort: 'high' },
       })
     ).status(),
   ).toBe(200);
