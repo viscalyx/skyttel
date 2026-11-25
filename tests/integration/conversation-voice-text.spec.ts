@@ -397,8 +397,17 @@ test('RÖSTTEXT-03: köns skrivna svar överlämnas till rösten en gång och sa
     held[1]([modelMessage('Andra svaret.')]);
     await expect.poll(() => voiceAnswerParts(live.sent).join('')).toContain('Andra svaret.');
     expect(commentary()).toHaveLength(1);
+    // The voice box updates before the server's next poll can observe playback.
+    const speakingReported = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/poll') &&
+        response.request().method() === 'POST' &&
+        response.request().postDataJSON()?.speakerActive === true &&
+        response.ok(),
+    );
     await output(page, first);
     await expect(voiceBox(page)).toHaveText('Skyttel talar');
+    await speakingReported;
     expect(commentary()).toHaveLength(1);
     await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
     // Long replies arrive as silent parts followed by one command to speak.
