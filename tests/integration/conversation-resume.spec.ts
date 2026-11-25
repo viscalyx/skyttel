@@ -103,7 +103,8 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
     await page.keyboard.press('Escape');
     await send(page, 'Beskriv garaget utan att ändra något.');
     await expect(log(page)).toContainText('Vilket garage?');
-    await view(page).getByRole('button', { name: 'Samtal', exact: true }).click();
+    const toggle = view(page).getByRole('button', { name: 'Samtal', exact: true });
+    await toggle.click();
     const list = view(page).getByRole('region', { name: 'Samtal', exact: true });
     await expect(
       list.getByRole('button', { name: 'Beskriv garaget utan att ändra något.', exact: true }),
@@ -127,10 +128,17 @@ test('KONTEXT-25: återuppta rätt samtal på samma och annan enhet utan att bla
     );
     await page.keyboard.press('Escape');
     await expect(list.getByRole('button', { name: 'Samtalsinformation' })).toBeFocused();
+    await page.setViewportSize({ width: 760, height: 900 });
     await page.reload();
     await openConversationText(page);
     await expect(log(page)).not.toContainText('Vilket garage?');
+    await toggle.click();
+    const compactText = view(page).getByRole('button', { name: 'Text', exact: true });
+    await expect(compactText).toBeVisible();
     await selectConversation(page, 'Fråga om garaget');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(compactText).toHaveCount(0);
+    await expect(toggle).toBeFocused();
     await expect(log(page)).toContainText('Vilket garage?');
     const other = await otherContext.newPage();
     await other.addInitScript({ content: liveBrowserFixtureSource });

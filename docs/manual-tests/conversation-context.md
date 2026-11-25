@@ -2191,11 +2191,11 @@ batchsvaret efter genomförandet och verifierar samma utfall efter omstart.
     "spec": "tests/integration/conversation-resume.spec.ts",
     "caseId": "KONTEXT-25"
   },
-  "reference": "Dator 1280 px i två separata Chromium-profiler, riktig server och SQLite, kontrollerad modell och Live med tyst media. Samma profil efter omladdning och en annan profil skyddar skilda vägar till samma bevarade samtal; den väntande textfrågan besvaras med röst.",
+  "reference": "Dator 1280 px i två separata Chromium-profiler, 760 px vid återval efter omladdning, riktig server och SQLite, kontrollerad modell och Live med tyst media. Samma profil efter omladdning och en annan profil skyddar skilda vägar till samma bevarade samtal; den väntande textfrågan besvaras med röst.",
   "outcomes": [
     "Första begäran visas som utdrag tills titeln är klar. Samtalsinformation visar datum och kopierbara diagnostikuppgifter.",
     "Bevarade samtal kan väljas separat utan att deras text blandas. Äldre Sol/låg ändrar inte det senaste personliga valet Terra/medium för ett nytt samtal.",
-    "Tangentbordet öppnar information och väljer samtal. Den valda textfrågan kan besvaras med röst på den andra enheten."
+    "Tangentbordet öppnar information och väljer samtal. Fokus återgår till Samtal när listan stängs i kompakt läge. Den valda textfrågan kan besvaras med röst på den andra enheten."
   ],
   "evidence": [
     {
@@ -2335,8 +2335,11 @@ batchsvaret efter genomförandet och verifierar samma utfall efter omstart.
    skapandetiden, senaste begäran och **Löper ut**. Kopiera samtals-ID och
    LangSmith-filter till en tom lokal anteckning. Samma ID ska finnas i båda.
    Tryck Escape och kontrollera att informationsknappen åter får fokus.
-3. Ladda om. Öppna den tomma textvyn och välj garagets samtal i listan.
-   Läs **Vilket garage?** en gång. Mikrofonen ska vara av.
+3. Ändra det första fönstrets bredd till 760 px och ladda om. Öppna den
+   tomma textvyn och välj **Samtal**. Kontrollera att **Text** visas när
+   listan är öppen. Välj garagets samtal med Enter. Listan stängs,
+   **Text** försvinner och **Samtal** får fokus. Läs **Vilket garage?**
+   en gång. Mikrofonen ska vara av.
 4. Logga in som Alex på den andra enheten och öppna samma hushåll.
    Starta ett nytt textsamtal. Välj **Medium** och **GPT-6.1 Terra**.
    Skicka **Beskriv cykeln utan att ändra något.** och läs cykelsvaret.

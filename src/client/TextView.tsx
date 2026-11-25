@@ -336,11 +336,7 @@ export function TextView({
                 if (compact) {
                   setListOpen(false);
                   if (draftOpen) onToggleDraft?.();
-                  root.current
-                    ?.querySelector<HTMLButtonElement>(
-                      '.conversation-panel-buttons button[aria-pressed]',
-                    )
-                    ?.focus();
+                  root.current?.querySelector<HTMLButtonElement>('.text-view-list-toggle')?.focus();
                 }
               }}
             />
