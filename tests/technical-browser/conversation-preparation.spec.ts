@@ -401,13 +401,11 @@ for (const seeded of [false, true]) {
       command(restoreScope);
       command('assistant Sparat.');
       await expect(log).toContainText('Sparat.');
+      at = events.length;
       await page.evaluate(clientTranscript);
-      await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', true));
       await expect(page.getByRole('group', { name: 'Röstruta', exact: true })).toContainText(
         'Skyttel talar',
       );
-      at = events.length;
-      await page.evaluate(() => window.skyttelVoiceFixture.setSound('remote', false));
       const summary = await held(at, 'context-summary');
       const renewedVoice = page.waitForResponse(
         (response) => response.request().method() === 'POST' && response.url().endsWith('/voice'),

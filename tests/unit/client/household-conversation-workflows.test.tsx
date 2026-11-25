@@ -695,11 +695,19 @@ test('a necessary question is retained across microphone OFF and text closure wi
       end_ms: 200,
     }),
   );
-  home.media.signals.set(home.media.peers[0].remote, 20);
+  const remote = home.media.peers[0].remote;
+  const sampled = vi.spyOn(home.media.signals, 'get');
+  home.media.signals.set(remote, 20);
   await waitFor(() =>
     expect(screen.getByRole('group', { name: 'Röstruta' }).textContent).toContain('Skyttel talar'),
   );
-  home.media.signals.set(home.media.peers[0].remote, 0);
+  // Render the full 200 ms question across successive 100 ms meter samples.
+  await waitFor(() =>
+    expect(sampled.mock.calls.filter(([track]) => track === remote).length).toBeGreaterThanOrEqual(
+      4,
+    ),
+  );
+  home.media.signals.set(remote, 0);
   await waitFor(() =>
     expect(screen.getByRole('group', { name: 'Röstruta' }).textContent).toContain(
       'Väntar på ditt svar',

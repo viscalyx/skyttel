@@ -414,7 +414,8 @@ Det inmatade `operationId` är provdata; servern väljer sitt verkliga ID.
 Läs sparade Lo-värden före ljudet. Kör därefter
 `assistant Sparat.` i terminalen för serverns fragment. Den tysta
 transporten skickar inte detta paket till webbläsarens mottagna ljudspår.
-Kopiera därför även följande paket i Console innan ljudet:
+Kör därför följande i Console för att leverera fragmentet och spela
+den syntetiska tonen i en halv sekund.
 
 ```javascript
 window.skyttelVoiceFixture.emit({
@@ -422,11 +423,11 @@ window.skyttelVoiceFixture.emit({
   event_id: crypto.randomUUID(),
   delta: 'Sparat.', start_ms: 0, end_ms: 100
 });
+window.skyttelVoiceFixture.remoteTone(800, 0, 0.5);
 ```
 
-Kör `window.skyttelVoiceFixture.setSound('remote', true)` i Console och
-slutligen samma kommando med `false`. Först efter mottaget fragment,
-observerad ljudaktivitet och avslutad signal börjar det nya
+Först efter mottaget fragment, observerad ljudaktivitet och avslutad
+signal börjar det nya
 sammanfattningsanropet. Släpp det med sammanfattningskommandot ovan.
 
 De vanliga fallen börjar utan `seed-family`. För ett separat prov av
