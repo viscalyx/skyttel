@@ -1,9 +1,9 @@
 import { vi } from 'vitest';
 
+type Playout = { jitterBufferEmittedCount: number; concealedSamples: number };
+
 /** Browser media boundaries; the real transport and held-input code stay in the test. */
-export function voiceMedia(
-  playout?: () => { jitterBufferEmittedCount: number; concealedSamples: number },
-) {
+export function voiceMedia(playout?: () => Playout | Promise<Playout>) {
   class Track extends EventTarget {
     enabled = true;
     muted = false;
@@ -145,7 +145,7 @@ export function voiceMedia(
                     type: 'inbound-rtp',
                     kind: 'audio',
                     codecId: 'opus',
-                    ...playout(),
+                    ...(await playout()),
                   },
                 ],
                 ['opus', { type: 'codec', clockRate: 48000 }],

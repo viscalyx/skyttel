@@ -107,7 +107,10 @@ type Attempt = {
     text: string;
     audibleTextLength?: number;
     mediaEnd?: number;
-    evidence?: { from: number; remainingMs: number; started: boolean };
+    evidence?: {
+      started: boolean;
+      fragments: { from: number; remainingMs: number; textLength: number }[];
+    };
     speaking: boolean;
   };
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
@@ -765,13 +768,14 @@ export function useVoice(options: {
               output.text += text;
               if (interval && (output.mediaEnd === undefined || interval.end > output.mediaEnd)) {
                 const from = Math.max(interval.start, output.mediaEnd ?? interval.start);
-                output.evidence = {
+                output.evidence ??= { started: false, fragments: [] };
+                output.evidence.fragments.push({
                   from: performance.now(),
-                  started: output.evidence?.started ?? false,
-                  remainingMs: (output.evidence?.remainingMs ?? 0) + interval.end - from,
-                };
+                  remainingMs: interval.end - from,
+                  textLength: output.text.length,
+                });
                 output.mediaEnd = interval.end;
-              } else output.evidence = undefined;
+              }
               checkOutput.current();
             },
             needsPlaybackProgress: () => Boolean(attempt.output?.evidence),
@@ -779,20 +783,23 @@ export function useVoice(options: {
               const output = attempt.output;
               const evidence = output?.evidence;
               if (!active() || !output || !evidence) return;
-              if (at <= evidence.from || (!evidence.started && !speaker)) return;
-              evidence.started = true;
-              evidence.remainingMs = Math.max(
-                0,
-                evidence.remainingMs -
-                  (from < evidence.from ? Math.min(renderedMs, at - evidence.from) : renderedMs),
-              );
-              evidence.from = at;
-              // A rendered pause advances the position. Hearing the ending
-              // still requires speaker evidence for the matched words.
-              if (evidence.remainingMs < 0.001) {
-                if (speaker) output.audibleTextLength = output.text.length;
-                output.evidence = undefined;
+              if (!evidence.started && !speaker) return;
+              // A stats read can finish after more transcript has arrived. Spend
+              // its frames once, and only on fragments present during the sample.
+              while (renderedMs > 0 && evidence.fragments.length) {
+                const fragment = evidence.fragments[0];
+                if (at <= fragment.from) break;
+                if (from < fragment.from) renderedMs = Math.min(renderedMs, at - fragment.from);
+                const credit = Math.min(renderedMs, fragment.remainingMs);
+                evidence.started = true;
+                fragment.remainingMs -= credit;
+                fragment.from = at;
+                renderedMs -= credit;
+                if (fragment.remainingMs >= 0.001) break;
+                if (speaker) output.audibleTextLength = fragment.textLength;
+                evidence.fragments.shift();
               }
+              if (!evidence.fragments.length) output.evidence = undefined;
             },
             onAudioActivity: (value) => {
               activityRef.current = value;

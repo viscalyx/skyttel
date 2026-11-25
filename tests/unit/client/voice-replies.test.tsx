@@ -530,3 +530,51 @@ test.each([
     );
   },
 );
+
+test.each([
+  { prefixMs: 50, laterMs: 50, acknowledged: true },
+  { prefixMs: 50, laterMs: 0, acknowledged: false },
+  { prefixMs: 150, laterMs: 100, acknowledged: true },
+  { prefixMs: 150, laterMs: 75, acknowledged: false },
+])(
+  'a pending playback report credits the $prefixMs ms prefix and $laterMs ms of later audio once',
+  async ({ prefixMs, laterMs, acknowledged }) => {
+    let samples = 0;
+    let hold = false;
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { media, server, tick, playedResponses } = await arrange(async () => {
+      const position = { jitterBufferEmittedCount: samples, concealedSamples: 0 };
+      if (hold) await held;
+      return position;
+    });
+    const text = 'Vilken cykel menar du?';
+    server.assistant = { ...initial, revision: 1, modelReply: text, questionPending: true };
+    server.response = { id: 'delayed-question', revision: 1, text, questionPending: true };
+    const emit = (delta: string, start: number, end: number) =>
+      act(async () =>
+        media.peers[0].channel.emit({
+          type: 'session.output_transcript.delta',
+          delta,
+          start_ms: start,
+          end_ms: end,
+        }),
+      );
+    await tick(500);
+    await emit('Vilken cykel ', 0, prefixMs);
+    media.signals.set(media.peers[0].remote, 40);
+    samples = 4800;
+    hold = true;
+    await tick(125);
+    await emit('menar du?', prefixMs, prefixMs + 50);
+    hold = false;
+    await act(async () => release());
+    samples += laterMs * 48;
+    await tick(75);
+    media.signals.set(media.peers[0].remote, 0);
+    await tick(1000);
+    expect(new Set(playedResponses)).toEqual(new Set(acknowledged ? ['delayed-question'] : []));
+  },
+);
