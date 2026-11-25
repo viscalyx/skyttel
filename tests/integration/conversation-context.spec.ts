@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import type { TextAssistantReview } from '../../src/shared/text-assistant.js';
 import { createHousehold, openProfile, signIn } from '../support/client.js';
 import {
+  closeConversationText,
   microphoneButton,
   openConversationText,
   openSavedHistory,
@@ -414,6 +415,7 @@ test('KONTEXT-23: text och röst läser aktuellt förslag efter en manuell rätt
     await send(page, 'Vad heter Lo Exempel i förslaget?');
     await expect(log(page)).toContainText('Lo-förslaget heter Lo Exempel.');
     await readVoiceProposal(page, 'Lo Exempel');
+    await closeConversationText(page);
     const form = await editTableObject(page, 'Lo Exempel');
     await form.getByLabel('Namn', { exact: true }).fill('Lo Manuell');
     await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();

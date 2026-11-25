@@ -286,9 +286,9 @@ inte på mobil enhet. Återställning ändrar inte utkastets startval.
 **Visa utkastet** ovanför samtalstexten visar antalet osparade ändringar.
 Välj knappen för en tabell med symbol, namn, typ och vad som ändras.
 Plus betyder nytt förslag, penna betyder rättelse och kryss betyder
-borttagning. Objekt, samband och egna typer ingår. Tabellen står till
-vänster om samtalstexten på dator och mellan knappen och samtalstexten på
-mobil enhet och smal skärm. **Dölj utkastet** fäller ihop den.
+borttagning. Objekt, samband och egna typer ingår. När panelerna ryms
+står utkastet till vänster om samtalstexten. På mindre skärmar växlar du
+mellan **Utkast** och **Text**. **Dölj utkastet** fäller ihop tabellen.
 Ett utfällt utkast utan ändringar säger **Utkastet är tomt.**
 
 På sidan **Samtal med Skyttel** i Inställningar kan du markera
@@ -296,8 +296,10 @@ På sidan **Samtal med Skyttel** i Inställningar kan du markera
 direkt och gäller dig i alla dina hushåll, på alla dina enheter. Grundvalet
 är hopfällt. Med valet på öppnas ett befintligt utkast när samtalet börjar
 och efter **Nytt samtal**. Ett tomt utkast väntar tills Skyttel föreslår den
-första ändringen. Att visa eller dölja utkastet ändrar bara det pågående
-samtalet. Valet går att spara även när samtalet inte är tillgängligt.
+första ändringen. En öppen utkastpanel på bred skärm förblir öppen när du
+byter samtal, även när utkastet är tomt. Att visa eller dölja panelen
+ändrar inte ditt sparade val. Valet går att spara även när samtalet inte är
+tillgängligt.
 En kort text vid kryssrutan säger om valet sparades eller om du behöver
 försöka igen.
 

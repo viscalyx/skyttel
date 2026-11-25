@@ -82,17 +82,17 @@ async function fixture(page: Page, model: ReturnType<typeof textModel>, unresolv
 }
 const commentary = (live: ReturnType<typeof liveProvider>) =>
   live.sent.filter(({ event }) => isVoiceAnswerRelease(event));
-async function output(page: Page, text: string) {
+async function output(page: Page, text: string, start = 200) {
   await page.evaluate(
-    (delta) =>
+    ({ delta, start }) =>
       window.skyttelVoiceFixture.emit({
         type: 'session.output_transcript.delta',
         event_id: crypto.randomUUID(),
         delta,
-        start_ms: 200,
-        end_ms: 300,
+        start_ms: start,
+        end_ms: start + 100,
       }),
-    text,
+    { delta: text, start },
   );
 }
 async function sound(page: Page, active: boolean) {
@@ -705,10 +705,9 @@ for (const mode of ['tal', 'text'] as const)
       await waitForResponse(live);
       await expect.poll(() => responses.at(-1)?.response?.questionPending).toBe(true);
       await expect.poll(() => views.at(-1)?.questionPending).toBe(true);
-      await sound(page, true);
-      await expect(voiceBox(page)).toContainText('Skyttel talar');
       await output(page, question);
-      await sound(page, false);
+      await page.evaluate(() => window.skyttelVoiceFixture.remoteTone(800, 0, 0.5));
+      await expect(voiceBox(page)).toContainText('Skyttel talar');
       await expect(voiceBox(page)).toHaveText('Väntar på ditt svar');
       await expect(voiceAnnouncement(page)).not.toContainText('Väntar på ditt svar');
       await expect(textView(page)).toHaveCount(0);
@@ -861,7 +860,7 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
     await sound(page, false);
     await expect(voiceBox(page)).toHaveText('Lyssnar');
     // The final transcript arrives before its audio starts. No four-second timeout yet.
-    await output(page, 'at.');
+    await output(page, 'at.', 300);
     await expectVoiceStatusFor('Lyssnar', 4500);
     await sound(page, true);
     await expectVoiceStatusFor('Skyttel talar', 4500);

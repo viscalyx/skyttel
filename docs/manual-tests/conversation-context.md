@@ -1896,9 +1896,9 @@ frågan om du provar med syntetisk mikrofon. Faktiskt hört ljud ingår inte.
 1. Skriv ”Vad heter Lo Exempel i förslaget?”. Släpp det första svaret och
    läs ”Lo-förslaget heter Lo Exempel.”. Öppna förslaget och läs namn,
    Person och Beskrivning. Stäng läsningen.
-2. Öppna **Tabell → Redigera Lo Exempel**. Sätt **Namn** till ”Lo Manuell”
-   och välj **Lägg i utkastet och stäng**. Öppna textvyn och läs hela
-   Lo Manuell i utkastet. Stäng läsningen.
+2. Stäng textvyn och öppna **Tabell → Redigera Lo Exempel**. Sätt **Namn**
+   till ”Lo Manuell” och välj **Lägg i utkastet och stäng**. Öppna textvyn
+   och läs hela Lo Manuell i utkastet. Stäng läsningen.
 3. Slå på mikrofonen. Säg ”Vad heter Lo Manuell i förslaget nu?” och släpp
    det andra svaret. Läs ”Lo-förslaget heter Lo Manuell.” i samtalstexten.
    Kontrollera att den första frågan och det första svaret finns kvar.

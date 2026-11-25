@@ -106,7 +106,8 @@ type Attempt = {
   output?: {
     text: string;
     audibleTextLength?: number;
-    evidence?: { from: number; remainingMs: number; mediaEnd: number };
+    mediaEnd?: number;
+    evidence?: { from: number; remainingMs: number };
     speaking: boolean;
   };
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
@@ -762,14 +763,13 @@ export function useVoice(options: {
               if (!active() || !output) return;
               if (attempt.acknowledgement) attempt.acknowledgement.lastActivity = Date.now();
               output.text += text;
-              const previous = output.evidence;
-              if (interval && (!previous || interval.end >= previous.mediaEnd)) {
-                const from = Math.max(interval.start, previous?.mediaEnd ?? interval.start);
+              if (interval && (output.mediaEnd === undefined || interval.end > output.mediaEnd)) {
+                const from = Math.max(interval.start, output.mediaEnd ?? interval.start);
                 output.evidence = {
                   from: performance.now(),
-                  remainingMs: (previous?.remainingMs ?? 0) + interval.end - from,
-                  mediaEnd: interval.end,
+                  remainingMs: (output.evidence?.remainingMs ?? 0) + interval.end - from,
                 };
+                output.mediaEnd = interval.end;
               } else output.evidence = undefined;
               checkOutput.current();
             },

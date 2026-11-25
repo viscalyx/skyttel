@@ -139,7 +139,7 @@ enheter”.
    **Nytt samtal**. Öppna **Visa förslaget: Lo Exempel**, läs Person och
    kontrollera att ingen egenskap Beskrivning finns. Stäng dialogen.
    Välj **Spara hela utkastet** i utkastet. Vänta tills sparandet är klart,
-   återgå till textvyn och välj **Nytt samtal**. Öppna det tomma utkastet.
+   återgå till textvyn och välj **Nytt samtal**. Läs det tomma utkastet.
 3. Logga in som Alex i den andra webbläsarprofilen. Öppna den utskrivna
    adressen följd av `/households/draft-other-household`. Öppna samma
    inställning. Avmarkera den där, ladda om Alex första sida och läs valet.
@@ -157,7 +157,7 @@ enheter”.
   föreslår den första ändringen.** Valet sparas direkt med **Valet är sparat**.
 - Ett befintligt utkast är utfällt vid start och efter **Nytt samtal**.
   **Dölj utkastet** ändrar bara det pågående samtalet, inte det sparade valet.
-  Ett tomt utkast börjar hopfällt; när det öppnas står **Utkastet är tomt.**
+  Vid bytet efter sparandet förblir panelen öppen och visar **Utkastet är tomt.**
 - Alex val följer mellan båda hushållen, båda webbläsarprofilerna och efter
   serverns omstart. Robin har fortfarande det omarkerade grundvalet.
 
@@ -196,19 +196,17 @@ testfallet “SAMTALSUTKAST-03: första förslaget öppnar utkastet på mobil en
 1. Markera utkastvalet i Inställningar, återgå och starta med text.
 2. Skriv **Lägg till Lo.** Operatören levererar det första förslaget enligt
    [förberedelsen](text-conversation-preparation.md#första-förslaget).
-3. Läs **Lo Exempel** i utkastet och svaret **Lo ligger i utkastet.** i
-   samtalet. Öppna **Visa förslaget: Lo Exempel**, läs **Person** och
-   kontrollera att ingen egenskap Beskrivning finns. Stäng dialogen.
-4. Läs placeringen och fortsätt med samma samtal. Bred emulerad pekare
-   har sitt eget fall nedan.
+3. Läs **Lo Exempel** i utkastet. Öppna **Visa förslaget: Lo Exempel**,
+   läs **Person** och kontrollera att ingen egenskap Beskrivning finns.
+   Stäng dialogen.
+4. Välj **Text** med tangentbordet och läs **Lo ligger i utkastet.** i samtalet.
 
 **Förväntat resultat:**
 
 - Det tomma utkastet börjar hopfällt trots det markerade valet. Det första
   förslaget öppnar tabellen och ökar antalet på knappen till ett.
-- Utkastet står mellan knappen och samtalstexten på mobil enhet och smal
-  skärm, på denna smala datorreferens. Tabellen och samtalstexten går att läsa
-  med tangentbord och skärmläsare. Sidan kräver ingen vågrät rullning.
+- **Utkast** och **Text** visar var sin vy. När **Text** är vald syns
+  svaret i samma samtal. Sidan kräver ingen vågrät rullning.
 
 ### SAMTALSUTKAST-05: utkastvalet fungerar utan tillgängligt samtal
 
@@ -300,7 +298,7 @@ SAMTALSUTKAST-06.
   },
   "reference": "820 × 1180, emulerad bred pekare; mobilens utkastplacering trots sidofält.",
   "outcomes": [
-    "Första förslaget öppnar utkastet mellan knappen och samtalstexten utan sidöverflöde."
+    "Första förslaget öppnar utkastet. Text visar svaret i samma samtal utan sidöverflöde."
   ]
 }
 ```
@@ -310,8 +308,8 @@ SAMTALSUTKAST-06.
 **Steg:**
 
 1. Utför SAMTALSUTKAST-03:s steg 1–4 **en gång** med denna konfiguration.
-   Under steg 4 läses utkastet mellan knappen och samtalstexten, även när
-   textvyn är ett sidofält. Ingen horisontell sidrullning behövs.
+   Växla från **Utkast** till **Text** även när textvyn är ett sidofält.
+   Ingen vågrät rullning behövs.
 
 **Förväntat resultat:**
 

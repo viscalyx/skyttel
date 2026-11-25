@@ -84,16 +84,16 @@ export function ConversationWorkspace({
   const previousConversation = useRef('');
   useEffect(() => {
     if (previousConversation.current !== conversationKey) {
-      const keepManualReview = manuallyToggled.current && Boolean(session);
+      const keepOpen = draftOpen && Boolean(session);
       previousConversation.current = conversationKey;
-      if (!keepManualReview) manuallyToggled.current = false;
+      manuallyToggled.current = keepOpen;
       initialChoice.current = null;
-      if (!keepManualReview) setDraftOpen(false);
+      if (!keepOpen) setDraftOpen(false);
     }
     if (!session || !preferencesKnown) return;
     initialChoice.current ??= showDraftOnStart;
     if (!manuallyToggled.current && initialChoice.current && count > 0) setDraftOpen(true);
-  }, [session, conversationKey, preferencesKnown, showDraftOnStart, count]);
+  }, [session, conversationKey, preferencesKnown, showDraftOnStart, count, draftOpen]);
   const activity = { working: conversation.working, needsAnswer };
   const resultFeedback = conversationFeedback(conversation);
   const feedback = (

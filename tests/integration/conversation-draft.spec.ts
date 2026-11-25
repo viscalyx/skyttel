@@ -177,13 +177,12 @@ test('SAMTALSUTKAST-02: valet följer användaren mellan hushåll och enheter', 
     await toggle(page).click();
     const restarted = page.waitForResponse(
       (response) =>
-        response.url().startsWith(`${app.origin}/api/households/${household.id}/text-assistant/`) &&
-        response.url().endsWith('/new') &&
+        response.url() === `${app.origin}/api/households/${household.id}/text-assistant` &&
         response.request().method() === 'POST',
     );
     await view(page).getByRole('button', { name: 'Nytt samtal' }).click();
     const restartResponse = await restarted;
-    expect(restartResponse.status()).toBe(200);
+    expect(restartResponse.status()).toBe(201);
     const conversation = await restartResponse.json();
     await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true');
     await readLoProposal(page);
@@ -213,8 +212,7 @@ test('SAMTALSUTKAST-02: valet följer användaren mellan hushåll och enheter', 
       expect.objectContaining({ operationId: receipt.operationId, status: 'succeeded', receipt }),
     ]);
     await view(page).getByRole('button', { name: 'Nytt samtal' }).click();
-    await expect(toggle(page)).toHaveAttribute('aria-expanded', 'false');
-    await toggle(page).click();
+    await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true');
     await expect(draft(page).getByRole('heading', { name: 'Utkast', exact: true })).toBeVisible();
     await expect(draft(page).getByText('Utkastet är tomt.', { exact: true })).toBeVisible();
     const { user: alex } = await (await page.request.get(`${app.origin}/api/bootstrap`)).json();
@@ -303,15 +301,16 @@ for (const configuration of [
         await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true');
         await expect(draft(page).getByRole('table')).toContainText('Lo Exempel');
         await expect(toggle(page)).toHaveAccessibleName('Dölj utkastet (1)');
-        await expect(view(page).locator('.text-view-conversation')).toContainText(
-          'Lo ligger i utkastet.',
-        );
         await readLoProposal(page);
-        const button = await toggle(page).boundingBox();
-        const box = await draft(page).boundingBox();
-        const conversation = await view(page).locator('.text-view-conversation').boundingBox();
-        expect(box?.y).toBeGreaterThanOrEqual((button?.y ?? 0) + (button?.height ?? 0));
-        expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(conversation?.y ?? 0);
+        const conversation = view(page).getByRole('log', { name: 'Samtalstext' });
+        await expect(conversation).toBeHidden();
+        const text = view(page).getByRole('button', { name: 'Text', exact: true });
+        await text.focus();
+        await text.press('Enter');
+        await expect(toggle(page)).toHaveAttribute('aria-expanded', 'false');
+        await expect(conversation).toBeVisible();
+        await expect(conversation).toContainText('Lo ligger i utkastet.');
+        await expect(draft(page)).toBeHidden();
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
           configuration.viewport.width,
         );
