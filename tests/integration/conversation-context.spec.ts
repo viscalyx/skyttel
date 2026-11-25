@@ -352,7 +352,7 @@ test('KONTEXT-03: skrivna och talade kommandon börjar om samtalet och kastar ut
     await expect.poll(() => live.requests.length).toBe(4);
     await expect
       .poll(() => live.sent.filter(({ event }) => isVoiceAnswerRelease(event)).length)
-      .toBe(commentsBeforeTypedReset);
+      .toBe(commentsBeforeTypedReset + 1);
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
     await expect(field(page)).toHaveValue('Oskickat under avstängning');
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks)).toEqual([

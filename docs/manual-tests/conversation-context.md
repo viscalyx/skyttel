@@ -204,7 +204,7 @@ och kastar utkastet”.
   "outcomes": [
     "Kommandona har samma verkan som **Nytt samtal** och den befintliga funktionen för att kasta hela utkastet. Bara ett uttryckligt **Kasta utkastet** tar bort de osparade förslagen.",
     "Tidigare samtalsord och pågående arbete följer inte med till det nya samtalet. Utkast, mikrofonläge och annan oskickad text bevaras vid nytt samtal utan kastkommando. Redan sparade uppgifter påverkas inte.",
-    "Logga ut avslutar samtalet. Samtalsord och ljud lagras inte. Faktiskt hört tal, mikrofon och skärmläsare återstår att prova manuellt enligt [förberedelsen i TAL-17](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare).",
+    "Utloggning pausar samtalet. Samtalstexten finns kvar tills samtalet raderas eller löper ut. Ljud lagras inte. Faktiskt hört tal, mikrofon och skärmläsare återstår att prova manuellt enligt [förberedelsen i TAL-17](voice-assistant.md#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare).",
     "Ett skrivet nytt samtal med mikrofonen av ger enbart text. Ett talat nytt samtal får sitt röstbesked efter släpp eller avstängning, medan mikrofonen förblir av. Teknisk överlämning kontrolleras separat; faktiskt hört tal kräver den verkliga röstinstallationen."
   ],
   "evidence": [

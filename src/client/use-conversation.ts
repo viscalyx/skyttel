@@ -821,8 +821,9 @@ export function useConversation({
     contextFailed: session?.contextSummaryState === 'failed',
     onRecoveryNeeded: () => setUnknown(true),
     onNewConversation: () => {
-      if (switchBlocked || resetInProgress.current || revoking.current) return false;
-      void newConversation();
+      if (saveChecking || switchBlocked || resetInProgress.current || revoking.current)
+        return false;
+      void newConversation('voice');
       return true;
     },
   });
@@ -1471,8 +1472,8 @@ export function useConversation({
       voice.starting ||
       (!session?.requiresActivation && session?.contextSummaryState === 'summarizing'),
   );
-  async function newConversation() {
-    if (switchBlocked || resetInProgress.current || revoking.current) return;
+  async function newConversation(resetSource?: 'voice') {
+    if (saveChecking || switchBlocked || resetInProgress.current || revoking.current) return;
     if (!consentValid) {
       setRequested('text');
       return;
@@ -1484,6 +1485,7 @@ export function useConversation({
     try {
       const next = await voice.newConversation(() =>
         request<TextAssistantView>(path, {
+          resetSource,
           previousId: active.current?.requiresActivation ? undefined : active.current?.id,
           ...(visitConsent ? { consent: { textVersion: conversationConsentTextVersion } } : {}),
         }),

@@ -56,7 +56,8 @@ export function createVoiceTransport(
     onAudioActivity?: (activity: { microphone: boolean; speaker: boolean }) => void;
     /** Text aligned with provider output audio; it does not define a complete turn. */
     onOutputTranscript?: (text: string, interval?: { start: number; end: number }) => void;
-    onSpeakerSample?: (at: number, sampledMs: number) => void;
+    needsPlaybackProgress?: () => boolean;
+    onPlaybackProgress?: (from: number, at: number, renderedMs: number, speaker: boolean) => void;
     /** Skyttel has taken on a task from what the user said. */
     onDelegation?: () => void;
     inputAllowed?: () => boolean;
@@ -112,6 +113,81 @@ export function createVoiceTransport(
   // Observe only the already-authorized streams. Incoming audio remains
   // independent of the microphone being off, and transcripts never imply playback.
   const meterIntervalMs = 100;
+  let receiver: RTCRtpReceiver | undefined;
+  let lastPosition:
+    | {
+        id: string;
+        mediaStart: number;
+        renderStart: number;
+        renderedMs: number;
+        at: number;
+      }
+    | undefined;
+  let readingPosition = false;
+  const rendering = () =>
+    measuring() &&
+    playing &&
+    !muted &&
+    [...remoteTracks].some(
+      (track) => track.enabled && !track.muted && track.readyState !== 'ended',
+    );
+
+  async function playbackProgress(at: number, sampledMs: number, speaker: boolean) {
+    if (!callbacks.needsPlaybackProgress?.() || !callbacks.onPlaybackProgress || !rendering()) {
+      lastPosition = undefined;
+      return;
+    }
+    const current = receiver;
+    if (!current?.getStats) {
+      if (speaker) callbacks.onPlaybackProgress(at - sampledMs, at, sampledMs, true);
+      return;
+    }
+    if (readingPosition) return;
+    readingPosition = true;
+    const renderTime = audioContext.currentTime;
+    try {
+      const stats = await current.getStats();
+      if (current !== receiver || !rendering()) {
+        lastPosition = undefined;
+        return;
+      }
+      for (const report of stats.values()) {
+        if (report.type !== 'inbound-rtp' || report.kind !== 'audio') continue;
+        const rate = stats.get(report.codecId)?.clockRate;
+        // Samples emitted by the jitter buffer include rendered pauses. Exclude
+        // concealment generated locally to fill in missing network audio.
+        const mediaMs = ((report.jitterBufferEmittedCount - report.concealedSamples) * 1000) / rate;
+        if (!(rate > 0 && Number.isFinite(mediaMs))) continue;
+        if (!lastPosition || lastPosition.id !== report.id) {
+          lastPosition = {
+            id: report.id,
+            mediaStart: mediaMs,
+            renderStart: renderTime,
+            renderedMs: 0,
+            at,
+          };
+          return;
+        }
+        // Both clocks report in blocks. Comparing their positions from one
+        // origin preserves frames across uneven meter ticks.
+        const renderedMs = Math.min(
+          mediaMs - lastPosition.mediaStart,
+          (renderTime - lastPosition.renderStart) * 1000,
+        );
+        const elapsed = renderedMs - lastPosition.renderedMs;
+        if (elapsed > 0) callbacks.onPlaybackProgress(lastPosition.at, at, elapsed, speaker);
+        lastPosition.at = at;
+        lastPosition.renderedMs = Math.max(lastPosition.renderedMs, renderedMs);
+        return;
+      }
+    } catch {
+      // Some receivers do not expose playout counters. Only credit audible samples.
+    } finally {
+      readingPosition = false;
+    }
+    lastPosition = undefined;
+    if (speaker && rendering()) callbacks.onPlaybackProgress(at - sampledMs, at, sampledMs, true);
+  }
   let lastSample = performance.now();
   const activityTimer = setInterval(() => {
     const at = performance.now();
@@ -125,7 +201,7 @@ export function createVoiceTransport(
         else next.speaker ||= !muted && audible(analyser);
       }
     }
-    if (next.speaker) callbacks.onSpeakerSample?.(at, sampledMs);
+    void playbackProgress(at, sampledMs, next.speaker);
     if (next.microphone !== activity.microphone || next.speaker !== activity.speaker) {
       activity = next;
       callbacks.onAudioActivity?.(next);
@@ -237,6 +313,8 @@ export function createVoiceTransport(
       event.track.stop();
       return;
     }
+    receiver = event.receiver;
+    lastPosition = undefined;
     remoteTracks.add(event.track);
     meter(new MediaStream([event.track]), false);
     audio.loop = false;
@@ -312,6 +390,8 @@ export function createVoiceTransport(
             ? { start: event.start_ms, end: event.end_ms }
             : undefined;
         callbacks.onOutputTranscript?.(event.delta, interval);
+        if (interval && !lastPosition && receiver?.getStats)
+          void playbackProgress(performance.now(), 0, false);
       }
     }),
     live.on('session.delegation.created', (event) => {

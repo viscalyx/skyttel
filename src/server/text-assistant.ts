@@ -530,7 +530,11 @@ export function textAssistantRoutes({
     for (const candidate of sessions.values())
       if (draftKey(candidate) === draftKey(session))
         for (const message of candidate.state.queue)
-          if (!message.continuedVoiceRead && message.draftVersion === before)
+          if (
+            !message.continuedVoiceRead &&
+            !(message.resetDiscard && message.voice) &&
+            message.draftVersion === before
+          )
             message.draftVersion = after;
     const predecessor = session.state.activeMessage;
     if (!predecessor) return;
@@ -2508,8 +2512,16 @@ export function textAssistantRoutes({
     discard = false,
     deferVoiceClose = false,
     requestId?: string,
+    spokenDiscard?: Pick<Message, 'draftVersion' | 'contentVersion'>,
   ) {
-    const completion = resetContext(session, preparation, discard, deferVoiceClose, requestId);
+    const completion = resetContext(
+      session,
+      preparation,
+      discard,
+      deferVoiceClose,
+      requestId,
+      spokenDiscard,
+    );
     session.execution.resetCompletion = completion;
     try {
       await completion;
@@ -2537,8 +2549,33 @@ export function textAssistantRoutes({
     discard: boolean,
     deferVoiceClose: boolean,
     requestId?: string,
+    spokenDiscard?: Pick<Message, 'draftVersion' | 'contentVersion'>,
   ) {
     checkPreparation(preparation);
+    if (spokenDiscard) {
+      // Finish asynchronous reads before retiring any work. A newer draft must
+      // leave the conversation intact even if it changed during the refresh.
+      const revision = session.state.revision;
+      await refresh(session, () => checkPreparation(preparation));
+      checkPreparation(preparation);
+      if (session.state.revision !== revision) throw new MapError('assistant_turn_changed', 409);
+      const current = database
+        .prepare(`SELECT 1 FROM household h
+        LEFT JOIN map_draft d ON d.householdId = h.id AND d.userId = ?
+        WHERE h.id = ? AND h.contentVersion = ? AND COALESCE(d.version, 0) = ?`)
+        .get(
+          session.state.owner,
+          session.state.householdId,
+          spokenDiscard.contentVersion,
+          spokenDiscard.draftVersion,
+        );
+      if (
+        !current ||
+        session.state.review.version !== spokenDiscard.draftVersion ||
+        session.state.review.contentVersion !== spokenDiscard.contentVersion
+      )
+        throw new MapError('assistant_draft_changed', 409);
+    }
     session.state.paused = false;
     session.state.titleRequested = undefined;
     session.state.firstRequest = undefined;
@@ -2595,7 +2632,7 @@ export function textAssistantRoutes({
         throw new MapError('assistant_turn_changed', 409);
     };
     try {
-      await refresh(session, checkReset);
+      if (!spokenDiscard) await refresh(session, checkReset);
       checkReset();
       session.state.phase = hasPendingOutcome(session) ? 'recovery' : 'ready';
       session.state.workVersion = session.state.review.version;
@@ -2642,8 +2679,8 @@ export function textAssistantRoutes({
             text: 'Kasta utkastet.',
             voice: deferVoiceClose,
             resetDiscard: true,
-            contentVersion: session.state.review.contentVersion,
-            draftVersion: session.state.review.version,
+            contentVersion: spokenDiscard?.contentVersion ?? session.state.review.contentVersion,
+            draftVersion: spokenDiscard?.draftVersion ?? session.state.review.version,
             owner: contentOwner(database, session.state.householdId, session.state.actorId),
             receivedAt,
             deadline: receivedAt + 30 * 60_000,
@@ -4591,7 +4628,8 @@ export function textAssistantRoutes({
         if (
           (message.continuedVoiceRead ||
             (requestsSave(message.text) && !message.saveSuperseded && !message.saveScopeChanged) ||
-            (!message.resetDiscard && conversationCommand(message.text)?.discard)) &&
+            ((!message.resetDiscard || message.voice) &&
+              conversationCommand(message.text)?.discard)) &&
           current.version !== message.draftVersion
         )
           throw new MapError('assistant_draft_changed', 409);
@@ -5174,13 +5212,15 @@ export function textAssistantRoutes({
     // Without a valid consent none starts, and the client is told why.
     if (!consents.valid(actorId, householdId, body?.consent))
       return context.json({ error: conversationConsentRequired }, 403);
-    return openConversation(context, householdId, sessions.get(body?.previousId));
+    return openConversation(context, householdId, sessions.get(body?.previousId), {
+      spokenReset: body?.resetSource === 'voice',
+    });
   });
   async function openConversation(
     context: Context<{ Variables: { actorId: string; browserSessionId: string } }>,
     householdId: string,
     previous?: Session,
-    validate?: () => void,
+    { validate, spokenReset }: { validate?: () => void; spokenReset?: boolean } = {},
   ) {
     const actorId = context.get('actorId');
     const browserSessionId = context.get('browserSessionId');
@@ -5288,6 +5328,7 @@ export function textAssistantRoutes({
           await stop(session);
           return context.json({ error: 'assistant_turn_changed' }, 409);
         }
+        if (spokenReset) session.state.resetSource = 'voice';
         void stop(previous, { conversation: 'pause', delivery: 'close', switched: true });
       }
       sessions.set(session.state.id, session);
@@ -5683,9 +5724,12 @@ export function textAssistantRoutes({
       return context.json({ error: 'assistant_draft_changed' }, 409);
     if (control?.reset) {
       if (!control.discard)
-        return openConversation(context, session.state.householdId, session, () => {
-          checkPreparation(preparation);
-          if (!currentTurn()) throw new MapError('assistant_turn_changed', 409);
+        return openConversation(context, session.state.householdId, session, {
+          spokenReset: body.voiceContext !== undefined,
+          validate: () => {
+            checkPreparation(preparation);
+            if (!currentTurn()) throw new MapError('assistant_turn_changed', 409);
+          },
         });
       await startOver(
         session,
@@ -5693,6 +5737,7 @@ export function textAssistantRoutes({
         control.discard,
         body.voiceContext !== undefined,
         body.requestId,
+        body.voiceContext === undefined ? undefined : body,
       );
       return context.json(view(session));
     }
@@ -5867,11 +5912,18 @@ export function textAssistantRoutes({
       voiceReset &&
       (voiceReset !== body.requestId ||
         body.revision !== session.state.revision ||
-        body.draftVersion !== session.state.review.version ||
+        (!body.discard && body.draftVersion !== session.state.review.version) ||
         body.contentVersion !== session.state.review.contentVersion)
     )
       return context.json({ error: 'assistant_turn_changed' }, 409);
-    await startOver(session, preparation, body.discard === true, Boolean(voiceReset), voiceReset);
+    await startOver(
+      session,
+      preparation,
+      body.discard === true,
+      Boolean(voiceReset),
+      voiceReset,
+      voiceReset && body.discard ? body : undefined,
+    );
     return context.json(view(session));
   });
   routes.post(`${base}/:sessionId/recover`, async (context) => {

@@ -764,3 +764,55 @@ test('a new conversation still checks a save that has begun before new work', as
   await newConversation(renewed);
   await expect.poll(async () => (await poll(second.id)).voice?.phase).toMatch(/closing|closed/);
 });
+
+test('The reset route rejects a spoken discard after another editor changes the draft', async () => {
+  const live = liveProvider();
+  const discarded = deferred<number>();
+  await setup({
+    modelFetch: textModel(() => [modelMessage('Klart.')]).provider,
+    liveFetch: live.provider,
+    liveSideband: live.attach,
+    assistantDispatch: async (incoming, dispatch) => {
+      if (incoming.method === 'POST' && new URL(incoming.url).pathname.endsWith('/new')) {
+        await propose('ny', 'Ny ändring');
+        // Legacy voice peers can include discard on their authenticated reset request.
+        const body = await incoming.clone().json();
+        const response = await dispatch(
+          new Request(incoming, {
+            body: JSON.stringify({ ...body, discard: true }),
+          }),
+        );
+        discarded.resolve(response.status);
+        return response;
+      }
+      return dispatch(incoming);
+    },
+  });
+  await propose('lo', 'Lo Exempel');
+  const session = await start();
+  const voice = await post(`${path}/${session.id}/voice`, {
+    sdp: 'synthetic-offer',
+    revision: session.revision,
+    draftVersion: session.review.version,
+    contentVersion: session.review.contentVersion,
+  });
+  expect(voice.status()).toBe(201);
+  delegateSpeech(live, 'Nytt samtal');
+  expect(await discarded.promise).toBe(409);
+  expect((await (await browser.get(map)).json()).draft.changes).toHaveLength(2);
+  expect((await (await browser.get(`${path}/${session.id}`)).json()).contextRevision).toBe(0);
+});
+
+test('A reset preserves the spoken origin on the replacement conversation', async () => {
+  await setup({ modelFetch: textModel(() => [modelMessage('Klart.')]).provider });
+  const previous = await start();
+  const response = await post(path, {
+    ...approvedForVisit,
+    previousId: previous.id,
+    resetSource: 'voice',
+  });
+  expect(response.status()).toBe(201);
+  const replacement: TextAssistantView = await response.json();
+  expect(replacement.id).not.toBe(previous.id);
+  expect((await (await browser.get(`${path}/${replacement.id}`)).json()).resetSource).toBe('voice');
+});

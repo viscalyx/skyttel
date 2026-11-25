@@ -107,7 +107,7 @@ type Attempt = {
     text: string;
     audibleTextLength?: number;
     mediaEnd?: number;
-    evidence?: { from: number; remainingMs: number };
+    evidence?: { from: number; remainingMs: number; started: boolean };
     speaking: boolean;
   };
   acknowledgement?: { id: string; lastActivity: number; notified: boolean };
@@ -767,22 +767,31 @@ export function useVoice(options: {
                 const from = Math.max(interval.start, output.mediaEnd ?? interval.start);
                 output.evidence = {
                   from: performance.now(),
+                  started: output.evidence?.started ?? false,
                   remainingMs: (output.evidence?.remainingMs ?? 0) + interval.end - from,
                 };
                 output.mediaEnd = interval.end;
               } else output.evidence = undefined;
               checkOutput.current();
             },
-            onSpeakerSample: (at, sampledMs) => {
+            needsPlaybackProgress: () => Boolean(attempt.output?.evidence),
+            onPlaybackProgress: (from, at, renderedMs, speaker) => {
               const output = attempt.output;
               const evidence = output?.evidence;
               if (!active() || !output || !evidence) return;
-              // A silence interval or a stalled meter cannot count as rendered speech.
-              evidence.remainingMs -= Math.min(sampledMs, Math.max(0, at - evidence.from));
+              if (at <= evidence.from || (!evidence.started && !speaker)) return;
+              evidence.started = true;
+              evidence.remainingMs = Math.max(
+                0,
+                evidence.remainingMs -
+                  (from < evidence.from ? Math.min(renderedMs, at - evidence.from) : renderedMs),
+              );
               evidence.from = at;
-              if (evidence.remainingMs <= 0) {
-                evidence.remainingMs = 0;
-                output.audibleTextLength = output.text.length;
+              // A rendered pause advances the position. Hearing the ending
+              // still requires speaker evidence for the matched words.
+              if (evidence.remainingMs < 0.001) {
+                if (speaker) output.audibleTextLength = output.text.length;
+                output.evidence = undefined;
               }
             },
             onAudioActivity: (value) => {

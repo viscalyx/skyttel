@@ -38,8 +38,8 @@ function Voice() {
     </>
   );
 }
-async function arrange() {
-  const media = voiceMedia();
+async function arrange(playout?: Parameters<typeof voiceMedia>[0]) {
+  const media = voiceMedia(playout);
   vi.useFakeTimers();
   const server: {
     assistant: TextAssistantView;
@@ -484,6 +484,49 @@ test.each(['other-session', 'old-turn', 'old-draft', 'old-content'] as const)(
     await tick(500);
     expect(JSON.parse(screen.getByLabelText('Levererade svar').textContent ?? '{}')).toEqual(
       latest,
+    );
+  },
+);
+
+test.each([
+  'rendered',
+  'uneven',
+  'missing',
+  'concealed',
+  'muted',
+  'suspended',
+  'missing ending',
+] as const)(
+  'Playback credits a quiet interval only when receiver media advances (%s)',
+  async (delivery) => {
+    const position = { jitterBufferEmittedCount: 0, concealedSamples: 0 };
+    const { media, server, tick, playedResponses } = await arrange(() => position);
+    server.assistant = { ...initial, revision: 1, modelReply: answer };
+    server.response = { id: 'paused-reply', revision: 1, text: answer, questionPending: false };
+    await tick(500);
+    await act(async () =>
+      media.peers[0].channel.emit({
+        type: 'session.output_transcript.delta',
+        delta: answer,
+        start_ms: 0,
+        end_ms: 500,
+      }),
+    );
+    const remote = media.peers[0].remote;
+    for (const [index, level] of [40, 0, 0, 0, delivery === 'missing ending' ? 0 : 40].entries()) {
+      media.signals.set(remote, level);
+      media.context.state = !level && delivery === 'suspended' ? 'suspended' : 'running';
+      remote.muted = !level && delivery === 'muted';
+      if (level || delivery !== 'missing')
+        position.jitterBufferEmittedCount +=
+          delivery === 'uneven' ? [4800, 3840, 5760, 3840, 5760][index] : 4800;
+      if (!level && delivery === 'concealed') position.concealedSamples += 4800;
+      await tick(100);
+    }
+    media.signals.set(remote, 0);
+    await tick(1500);
+    expect(new Set(playedResponses)).toEqual(
+      new Set(['rendered', 'uneven'].includes(delivery) ? ['paused-reply'] : []),
     );
   },
 );
