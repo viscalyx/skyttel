@@ -109,7 +109,7 @@ installationen för att bryta ljudet vid den angivna ändringen.
 
 **Förväntat resultat:**
 
-- Röstrutan visar **Skyttel arbetar** även för det skrivna uppdraget.
+- Röstrutan visar **Arbetar** även för det skrivna uppdraget.
   Arbetsraden syns i samtalstexten. Arbetsbeskedet erbjuds som DOM-status en
   gång.
 - Svaret skickas till rösten och finns i samtalstexten när textvyn öppnas

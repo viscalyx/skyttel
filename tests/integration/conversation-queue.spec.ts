@@ -283,7 +283,7 @@ test('KÖ-02: smal dator visar stopp, behåller oskickad text och tillåter Esca
     await expect.poll(() => fixtures.held.length).toBe(1);
     await expect(region(page).getByRole('button', { name: 'Skicka', exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Avbryt', exact: true })).toHaveCount(1);
-    await expect(voiceBox(page)).toHaveText('Skyttel arbetar');
+    await expect(voiceBox(page)).toHaveText('Arbetar');
     await field(page).fill('Oskickad text');
     await field(page).press('Enter');
     expect(fixtures.held).toHaveLength(1);

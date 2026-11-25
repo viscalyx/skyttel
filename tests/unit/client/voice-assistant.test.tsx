@@ -531,7 +531,7 @@ test.each([
       peer.channel.emit({ type: 'session.started', session: { id: 'provider' } }),
     );
     if (action === 'interrupt') signals.set(peer.remote, 22);
-    await screen.findByText(action === 'interrupt' ? 'Skyttel talar' : 'Skyttel arbetar');
+    await screen.findByText(action === 'interrupt' ? 'Skyttel talar' : 'Arbetar');
     const input = screen.getByRole<HTMLTextAreaElement>('textbox', {
       name: 'Meddelande till Skyttel',
     });
@@ -654,7 +654,7 @@ test('a screen reader is told Lyssnar once, Skyttel arbetar, and Mikrofonen är 
   expect(announced()).toBe(first);
   phase = 'working';
   await waitFor(() => expect(announcement()).toBe('Skyttel arbetar'), { timeout: 2000 });
-  expect(voiceBox()?.textContent).toBe('Skyttel arbetar');
+  expect(voiceBox()?.textContent).toBe('Arbetar');
   phase = 'listening';
   signals.set(remote, 22);
   await screen.findByText('Skyttel talar');
@@ -874,14 +874,14 @@ test('a task that was said is worked through with the microphone off, including 
     Peer.all[0].channel.emit({ type: 'session.started', session: { id: 'provider-session' } });
     await vi.advanceTimersByTimeAsync(600);
   });
-  expect(voiceBox()?.textContent).toBe('Skyttel arbetar');
+  expect(voiceBox()?.textContent).toBe('Arbetar');
   fireEvent.click(microphoneButton());
   expect(track.enabled).toBe(false);
   await act(async () => {
     await vi.advanceTimersByTimeAsync(3000 * 3);
   });
   // The box stays for the task that was said, with the stop icon, and the microphone can be turned on.
-  expect(voiceBox()?.textContent).toBe('Skyttel arbetar');
+  expect(voiceBox()?.textContent).toBe('Arbetar');
   expect(screen.getByRole('button', { name: 'Avbryt' })).toBeDefined();
   expect(microphoneButton().disabled).toBe(false);
   expect(urls.some((url) => url.endsWith('/stop'))).toBe(false);
@@ -1632,7 +1632,7 @@ test('the microphone cannot be turned on while Skyttel works with a written mess
 });
 
 test.each([
-  ['working', 'Skyttel arbetar'],
+  ['working', 'Arbetar'],
   ['recovery', 'Lyssnar'],
   ['closed', null],
   ['closing', null],

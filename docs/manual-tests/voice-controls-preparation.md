@@ -499,7 +499,7 @@ förberedelse. Läs det verkliga held-anropets värden varje gång. Alla uppgift
 
 1. Skriv **Osänd rättelse** i samtalets textfält utan att skicka. Kör
    `user Rätta Lo.` och `delegate` i startguiden. Håll modellanropet.
-2. Stäng textvyn och öppna Karta. Kräv **Skyttel arbetar** i röstrutan.
+2. Stäng textvyn och öppna Karta. Läs **Arbetar** i röstrutan.
    Förbered ljudförloppet i Chromium med konsolen. Varje ton motsvarar ett ord.
    Mätningen läser inkommande ljud och ljudet som webbläsaren skickar till
    högtalaren.
@@ -698,18 +698,20 @@ Resurskontrollen vid UI-steg 2 och 4 använder
    `setSound('microphone', true, 0.9)`.
 2. Kör `setSound('remote', true)` med mikrofonljudet kvar.
 3. Kör `user Beskriv utkastet.` och `delegate`. Stoppa mikrofonljudet med
-   `setSound('microphone', false)` och vänta tills anropet är hållet.
-   Återuppta mikrofonljudet med `setSound('microphone', true, 0.9)` och
-   kontrollera **Skyttel arbetar**. Stoppa mikrofonljudet igen med
-   `setSound('microphone', false)` och släpp anropet med
-   `reply REQUEST Utkastet har ett förslag.`.
+   `setSound('microphone', false)` och vänta tills anropet är hållet. Läs
+   **Skyttel talar**. Kör `setSound('remote', false)` och läs **Arbetar**.
+   Återuppta mikrofonljudet med `setSound('microphone', true, 0.9)`. Läs
+   **Du talar** och se att **Avbryt** finns kvar. Stoppa mikrofonljudet igen
+   med `setSound('microphone', false)` och läs **Arbetar**.
 4. Slå på minskad rörelse i operativsystemet eller i webbläsarens
-   utvecklarverktyg. Återuppta mikrofonljudet med
+   utvecklarverktyg och se det stilla strecket. Släpp anropet med
+   `reply REQUEST Utkastet har ett förslag.` och kör `setSound('remote', true)`.
+   Återuppta mikrofonljudet med
    `setSound('microphone', true, 0.9)`. Stoppa sedan Skyttels ljud,
    sänk mikrofonljudet till 0.08 och stoppa till sist mikrofonljudet.
 
 Separat måttunderlag för föregående TAL-14: automationen mäter röstrutans höjd
-till exakt 36 px vid Lyssnar, Du talar, Skyttel talar, Skyttel arbetar och
+till exakt 36 px vid Lyssnar, Du talar, Skyttel talar, Arbetar och
 minskad rörelse. Vid teknisk inspektion, välj `.voice-box` i Elements och
 läs dess beräknade höjd vid samma stadier. Det vanliga UI-flödet kontrollerar
 läsbarhet och nåbara kontroller.
@@ -1012,7 +1014,7 @@ efter fallet och avsluta med `quit`.
    ingen andra uppläsning av brickans namn.
 3. Slå på mikrofonen. I terminalen: `user Beskriv kartan.` och `delegate`.
    Kontrollera den aktiva anslutningen med `sessions`.
-4. Slå av mikrofonen medan modellen hålls. Röstrutan säger **Skyttel arbetar**,
+4. Slå av mikrofonen medan modellen hålls. Röstrutan visar **Arbetar**,
    men textknappen har ingen arbetsmarkering för det talade uppdraget.
 5. Släpp modellen med `reply REQUEST Det talade svaret.`. Öppna textvyn och läs
    även den raden. Kontrollera att inget ytterligare modelluppdrag skapats.

@@ -819,7 +819,7 @@ test('stopping a pending task from Settings restores Settings focus and cannot d
   await userEvent.type(screen.getByLabelText('Meddelande till Skyttel'), 'Ny oskickad text');
   await home.settings();
   const box = screen.getByRole('group', { name: 'Röstruta' });
-  expect(box.textContent).toContain('Skyttel arbetar');
+  expect(box.textContent).toContain('Arbetar');
   await userEvent.click(within(box).getByRole('button', { name: 'Avbryt' }));
   await waitFor(() =>
     expect(document.activeElement).toBe(screen.getByRole('link', { name: 'Tillbaka till kartan' })),

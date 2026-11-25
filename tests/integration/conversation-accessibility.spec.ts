@@ -206,7 +206,7 @@ test('HJALP-03: samma arbete och kontexttröskel läses en gång över textvy, r
     await voiceLive.locator('span').evaluate((span) => {
       span.dataset.occurrence = 'first';
     });
-    await expect(voiceBox(page)).toHaveText('Skyttel arbetar');
+    await expect(voiceBox(page)).toHaveText('Arbetar');
     await expect(voiceLive.locator('span')).toHaveAttribute('data-occurrence', 'first');
     const liveId = [...live.channels.keys()].at(-1);
     if (!liveId) throw new Error('Missing voice');

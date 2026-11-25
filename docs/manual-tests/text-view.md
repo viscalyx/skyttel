@@ -4,8 +4,8 @@ Fallen provar **Skriv till Skyttel**: textvyn öppnas och stängs utan att
 samtalet avslutas, samtalstexten visar vem som skriver, raden
 **Skyttel arbetar…** står sist och **Nytt samtal** tömmer samtalet men
 behåller utkast, mikrofon och oskickad text. De provar också att textvyn
-går att använda på mobil enhet och smal skärm samt personliga bredder på
-dator. Placering, bredd och mått
+går att använda på mobil enhet och smal skärm, hur den lägger sig över kartan,
+och personliga bredder på dator. Placering, bredd och mått
 kontrolleras av integrationstesterna.
 Anteckna commit, webbläsare, enhet och godkänt eller underkänt resultat
 vid körning.
@@ -17,7 +17,7 @@ vid körning.
 
 ## Allmän förberedelse
 
-1. För TEXTVY-01, TEXTVY-02 och TEXTVY-04: starta den
+1. För TEXTVY-01, TEXTVY-02, TEXTVY-04 och TEXTVY-07: starta den
    [kontrollerade installationen för text](text-assistant.md#controlled-text-fixture).
    För TEXTVY-03, TEXTMOBIL-01–05 och TEXTBREDD-01–05: starta i stället
    [den kontrollerade röstinstallationen](voice-assistant.md#controlled-voice-fixture)
@@ -84,7 +84,7 @@ avsluta samtalet”.
 
 **Förväntat resultat:**
 
-- Textvyn står vid högerkanten, och kartan syns bredvid.
+- Textvyn står ovanpå kartan vid högerkanten, och kartan syns bredvid.
 - Kontextmätaren står under samtalsrubriken.
   Sparandet nås genom **Rapporter → Ändringshistorik**.
 - **Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.**
@@ -96,6 +96,57 @@ avsluta samtalet”.
   bredden igen. Samtalet fortsätter, och **Oskickat** står kvar när
   textvyn öppnas igen. Det andra trycket stänger textvyn.
 - Snabblänken öppnar textvyn som knappen, med **Oskickat** kvar.
+
+### TEXTVY-07: textvyn täcker kartan och flyttar bara en skymd markering
+
+**Syfte:** Kontrollera bakgrunden och markeringens placering när textvyn
+öppnas, blir bredare och stängs.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ett datorfönster med 1280 × 800 px, mus och en synlig
+bakgrund. **Lo Exempel** syns som osparat förslag i kartan.
+
+**Integrationstest:**
+[text-view.spec.ts](../../tests/integration/text-view.spec.ts), TEXTVY-07.
+
+<!--
+```manual-mapping
+{
+  "counterpart": {
+    "runner": "playwright",
+    "suite": "integration",
+    "spec": "tests/integration/text-view.spec.ts",
+    "caseId": "TEXTVY-07"
+  },
+  "reference": "1280 × 800 px med mus, valt objekt till höger och aktiv bakgrund.",
+  "outcomes": [
+    "Bakgrund och kartobjekt ligger kvar när textvyn öppnas utan en markering.",
+    "Bara kartan panorerar när textvyn eller utkastet skymmer det valda objektet.",
+    "Kartan kan panoreras för hand med textvyn öppen och behåller läget vid stängning."
+  ]
+}
+```
+-->
+
+**Steg:**
+
+1. Med **Lo Exempel** omarkerad, öppna och stäng **Skriv till Skyttel**.
+2. Markera **Lo Exempel**. Dra med höger musknapp över en tom del av kartan
+   så att objektet hamnar i den del som textvyn nyss täckte. Öppna textvyn.
+3. Gå till **Ändra samtalstextens bredd** med Tab och tryck vänsterpil.
+   Välj sedan **Visa utkastet** i textvyn.
+4. Panorera kartan åt höger tills objektet ligger bakom utkastet. Välj
+   **Stäng textvyn**.
+
+**Förväntat resultat:**
+
+- I steg 1 ligger bakgrunden och objektet stilla.
+- Bakgrunden följer den manuella panoreringen i steg 2. När textvyn öppnas
+  och blir bredare ligger bakgrunden stilla. Kartan panorerar så att hela
+  det valda objektet syns precis bredvid textvyn eller utkastet.
+- När du panorerar med textvyn öppen ligger kartan kvar där du lämnar den.
+  När textvyn stängs syns objektet där du placerade det.
 
 ### TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar sist
 
@@ -539,7 +590,7 @@ riktiga samtalet”, i gruppen “valt mobilt samtalsflöde”.
 1. Välj **Prata med Skyttel**, godkänn och invänta **Lyssnar**. Operatören
    levererar det talade uppdraget och håller svaret enligt separat
    förberedelse. Läs
-   **Skyttel arbetar**, vågform och **Avbryt** med textvyn stängd.
+   **Arbetar**, vågformen och **Avbryt** med textvyn stängd.
 2. Låt operatören leverera svaret och invänta
    **Lyssnar**. Öppna **Skriv till Skyttel**. Fältet ska inte få fokus
    av sig självt på pekskärm.
@@ -558,7 +609,8 @@ riktiga samtalet”, i gruppen “valt mobilt samtalsflöde”.
 - Vid 508 och 190 px synlig höjd syns kontextmätare, **Utkast (1)**,
   **Nytt samtal** och stängknapp i en kompakt rad. Fältet har en rad,
   behåller fokus och står under samtalstexten. Röstrutan står ovanför
-  fältet. Endast fältets **Avbryt** visas under skrivet arbete.
+  fältet. I stående läge har röstrutan en egen plats under den rullbara
+  samtalstexten. Endast fältets **Avbryt** visas under skrivet arbete.
 - Vid 820 × 1180 px är textvyn ett 400 px sidofält och kartan syns
   bredvid. Kompakt läge upphör utan att fältet eller samtalet byts ut.
 - Automationen fångar appens riktiga ytor efter produktionsbygge, med riktig
@@ -1669,7 +1721,7 @@ resurser separat. Utför arbetsflödet en gång.
 2. Slå på och av mikrofonen två gånger. Brickan döljs av röstrutan och
    återkommer utan en ny DOM-status för samma svar.
 3. Slå på mikrofonen och låt förberedelsens **Beskriv kartan.** börja arbeta.
-   Slå av mikrofonen under arbetet. Läs **Skyttel arbetar** utan
+   Slå av mikrofonen under arbetet. Läs **Arbetar** i röstrutan utan
    textarbetsmarkering.
 4. Låt **Det talade svaret.** komma, öppna textvyn och läs även den raden.
 

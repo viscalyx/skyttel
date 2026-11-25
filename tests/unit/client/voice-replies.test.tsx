@@ -490,6 +490,7 @@ test.each(['other-session', 'old-turn', 'old-draft', 'old-content'] as const)(
 
 test.each([
   'rendered',
+  'rendered tail',
   'uneven',
   'missing',
   'concealed',
@@ -513,11 +514,12 @@ test.each([
       }),
     );
     const remote = media.peers[0].remote;
-    for (const [index, level] of [40, 0, 0, 0, delivery === 'missing ending' ? 0 : 40].entries()) {
+    const finalLevel = delivery === 'rendered tail' || delivery === 'missing ending' ? 0 : 40;
+    for (const [index, level] of [40, 0, 0, 0, finalLevel].entries()) {
       media.signals.set(remote, level);
       media.context.state = !level && delivery === 'suspended' ? 'suspended' : 'running';
       remote.muted = !level && delivery === 'muted';
-      if (level || delivery !== 'missing')
+      if (level || (delivery !== 'missing' && !(index === 4 && delivery === 'missing ending')))
         position.jitterBufferEmittedCount +=
           delivery === 'uneven' ? [4800, 3840, 5760, 3840, 5760][index] : 4800;
       if (!level && delivery === 'concealed') position.concealedSamples += 4800;
@@ -526,7 +528,7 @@ test.each([
     media.signals.set(remote, 0);
     await tick(1500);
     expect(new Set(playedResponses)).toEqual(
-      new Set(['rendered', 'uneven'].includes(delivery) ? ['paused-reply'] : []),
+      new Set(['rendered', 'rendered tail', 'uneven'].includes(delivery) ? ['paused-reply'] : []),
     );
   },
 );

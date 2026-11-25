@@ -427,7 +427,8 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   Verkligt ljud och skärmläsare bedöms separat.
 - [Skyttels röst](voice-assistant.md): svenska röstuppdrag,
   start efter medgivande, mikrofonen på och av med **Prata med Skyttel**,
-  röstrutans statusord, vågform, stoppikon, plats och uppläsning,
+  röstrutans statusord, staplar vid tal, puls under arbete, stoppikon,
+  ring i vila, plats och uppläsning,
   ljudaktivitet, fördröjda svar med mikrofonen av och fokus efter avbrott
   även i Inställningar. TAL-06 provar en omedelbar rättelse, gamla ljud
   på båda sidor om pausen och nästa repliks första ord. Övriga fall provar
@@ -459,9 +460,11 @@ Det ersätter inte verkliga leverantörs- eller skärmläsarprov.
   spärrad ljuduppspelning och mikrofonens läge vid nytt samtal.
 
 - [Textvyn](text-view.md): **Skriv till Skyttel** öppnar och stänger
-  textvyn utan att samtalet avslutas, samtalstexten visar vem som skriver
-  och raden Skyttel arbetar sist med en roterande ring som följer valet
-  för minskad rörelse. Aktuellt arbetssteg och utfällbara MCP-steg visar
+  textvyn utan att samtalet avslutas. Textvyn ligger ovanpå kartan med
+  stilla bakgrund och kartan panorerar vid behov för att visa markeringen.
+  Samtalstexten visar vem som skriver och raden Skyttel arbetar sist med en
+  roterande ring som följer valet för minskad rörelse. Aktuellt arbetssteg
+  och utfällbara MCP-steg visar
   vad som händer. **Nytt samtal** behåller utkast, mikrofon
   och oskickad text även vid dubbelklick under fördröjd omstart, och textvyn
   går att använda på pekskärm och smal skärm. Textknappens överlagrade

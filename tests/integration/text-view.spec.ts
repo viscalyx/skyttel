@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { backgroundDifference, captureBackground } from '../support/background-pixels.js';
 import {
   closeSupportDialog,
   createHousehold,
@@ -103,12 +104,12 @@ test('TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan att avslut
     );
 
     // On a computer: a side field of 400 px at the right edge, under the voice box's corner.
-    // It pushes the map aside, and the message field has the focus.
+    // The map keeps its full geometry and the message field has the focus.
     const view = await bounds(textView(page));
     expect(view.width).toBe(400);
     expect(view.right).toBe(1280);
     expect(view.y).toBeGreaterThanOrEqual(64);
-    await expect.poll(async () => (await bounds(page.locator('.map-space'))).right).toBe(880);
+    expect(await bounds(page.locator('.map-space'))).toEqual(map);
     expect(map.right).toBe(1280);
     await expect(textView(page).getByRole('heading', { level: 2 })).toHaveText(
       'Skriv till Skyttel',
@@ -138,6 +139,71 @@ test('TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan att avslut
     await expect(messageField(page)).toHaveValue('Oskickat');
     await expect(messageField(page)).toBeFocused();
     expect(stops).toEqual([]);
+  } finally {
+    await app.close();
+  }
+});
+
+test('TEXTVY-07: textvyn täcker kartan och flyttar bara en skymd markering', async ({
+  page,
+}, info) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const { app } = await household(page, () => [modelMessage('Ett provsvar.')]);
+  try {
+    const marker = page.locator('.spatial-node[data-object-id="lo"]');
+    const tool = await utilityButton(page, 'Skriv till Skyttel');
+    const widthHandle = textView(page).getByRole('separator', {
+      name: 'Ändra samtalstextens bredd',
+    });
+    const pixels = (name: string) => captureBackground(page, info.outputPath(`${name}.png`));
+    const panRight = async (distance: number) => {
+      await page.mouse.move(300, 700);
+      await page.mouse.down({ button: 'right' });
+      await page.mouse.move(300 + distance, 700);
+      await page.mouse.up({ button: 'right' });
+    };
+
+    const initial = await bounds(marker);
+    const initialSky = await pixels('initial');
+    await tool.click();
+    await expect(textView(page)).toBeVisible();
+    expect(await bounds(marker)).toEqual(initial);
+    expect(backgroundDifference(initialSky, await pixels('unselected'))).toBe(0);
+    await closeConversationText(page);
+
+    await marker.click();
+    await expect(marker).toHaveAttribute('aria-pressed', 'true');
+    await panRight(320);
+    const covered = await bounds(marker);
+    expect(covered.x).toBeGreaterThan(880);
+    const pannedSky = await pixels('user-pan');
+    expect(backgroundDifference(initialSky, pannedSky)).toBeGreaterThan(0);
+
+    await tool.click();
+    await expect.poll(async () => (await bounds(marker)).right).toBeLessThanOrEqual(880);
+    const uncovered = await bounds(marker);
+    expect(uncovered.right).toBeGreaterThan(870);
+    expect(uncovered.y).toBe(covered.y);
+    expect(backgroundDifference(pannedSky, await pixels('auto-pan'))).toBe(0);
+
+    await widthHandle.press('ArrowLeft');
+    await expect(widthHandle).toHaveAttribute('aria-valuenow', '424');
+    await expect.poll(async () => (await bounds(marker)).right).toBeLessThanOrEqual(856);
+    const draftButton = textView(page).getByRole('button', { name: 'Visa utkastet (1)' });
+    await draftButton.click();
+    const draft = textView(page).getByRole('region', { name: 'Utkastet', exact: true });
+    const draftLeft = (await bounds(draft)).x;
+    await expect.poll(async () => (await bounds(marker)).right).toBeLessThanOrEqual(draftLeft);
+    expect(backgroundDifference(pannedSky, await pixels('wider'))).toBe(0);
+
+    const adjusted = await bounds(marker);
+    await panRight(120);
+    await expect.poll(async () => (await bounds(marker)).x).toBeGreaterThan(adjusted.x + 80);
+    await expect(marker).toHaveAttribute('inert', '');
+    const moved = await bounds(marker);
+    await closeConversationText(page);
+    await expect(marker).not.toHaveAttribute('inert', '');
+    expect(await bounds(marker)).toEqual(moved);
   } finally {
     await app.close();
   }

@@ -774,7 +774,7 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
       const observer = new MutationObserver(() => {
         const text = document.querySelector('[aria-label="Röstruta"]')?.textContent ?? '';
         const next =
-          ['Skyttel arbetar', 'Skyttel talar', 'Sparat', 'Rösten startar', 'Lyssnar'].find((word) =>
+          ['Arbetar', 'Skyttel talar', 'Sparat', 'Rösten startar', 'Lyssnar'].find((word) =>
             text.includes(word),
           ) ?? 'other';
         if (status !== next) {

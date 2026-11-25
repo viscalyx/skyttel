@@ -1,6 +1,4 @@
-/* The text view: the conversation text and the message field. On a computer
-   and a wide touch screen it is a side field at the right edge that pushes the
-   map aside. It starts under the corner where the voice box stands. */
+/* The text view overlays the right edge of the map, below the voice corner. */
 .text-view {
   display: flex;
   flex-direction: column;
@@ -13,7 +11,7 @@
   flex: none;
 }
 .household-map.workspace-shell {
-  /* The room that the open text view takes from the map. */
+  /* The width of the main conversation panel. */
   --text-view-space: 0px;
 }
 .household-map.workspace-shell .text-view {
@@ -400,13 +398,6 @@
 
 .household-map.workspace-shell[data-narrow="false"].text-view-open {
   --text-view-space: min(var(--text-view-width, 400px), calc(100vw - 100px));
-}
-/* What stands at the right edge moves with the map. */
-.household-map.workspace-shell[data-narrow="false"].text-view-open .map-space {
-  right: var(--text-view-space);
-}
-.household-map.workspace-shell[data-narrow="false"].text-view-open.workspace-revealing .map-space {
-  right: calc(430px + var(--text-view-space));
 }
 .household-map.workspace-shell[data-narrow="false"].text-view-open
   :is(.workspace-feedback, .workspace-voice-controls) {

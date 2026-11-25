@@ -218,18 +218,22 @@ skärmläsare på pekskärm.
 **Skriv till Skyttel** öppnar och stänger textvyn. Textvyn visar
 samtalstexten och meddelandefältet **Meddelande till Skyttel**.
 
-- På en dator ligger textvyn vid högerkanten och knuffar undan kartan, så
-  att du ser ändringarna i kartan medan du skriver. Meddelandefältet får
-  fokus när textvyn öppnas. Om formulären och textvyn inte får plats
-  samtidigt växlar du mellan dem med verktygsradens knappar. Vyerna
-  behåller sina bredder, oskickad text och det pågående röstsamtalet.
+- På en bred skärm ligger textvyn ovanpå kartan vid högerkanten. Bakgrunden
+  ligger kvar när textvyn öppnas, stängs eller ändrar bredd. Om en öppnad
+  eller bredare textvy skymmer det du har markerat panorerar kartan så långt
+  som behövs för att visa markeringen, om den får plats med aktuell zoom.
+  Kartan behåller sitt läge när du stänger textvyn.
+- På en dator får meddelandefältet fokus när textvyn öppnas. Om formulären
+  och textvyn inte får plats samtidigt växlar du mellan dem med
+  verktygsradens knappar. Vyerna behåller sina bredder, oskickad text och
+  det pågående röstsamtalet.
 - På en mobil enhet och en smal skärm får fältet inte fokus av sig självt.
   Tryck i fältet när du vill skriva. På en smal skärm fyller textvyn
   skärmen under verktygsraden, och **Tabell** och **Karta** tar dess
   plats när du väljer dem.
 - På en bred pekskärm är textvyn 400 px bred, också på en liggande
-  telefon. Kartan syns bredvid. En dator med pekskärm och mus följer
-  datorläget; den främsta pekaren avgör.
+  telefon. Du kan använda den del av kartan som syns bredvid. En dator
+  med pekskärm och mus följer datorläget. Den främsta pekaren avgör.
 - När den synliga höjden är under 520 px på mobil enhet eller smal skärm
   blir överkanten en kompakt rad med kontextmätaren, **Utkast** och
   antalet ändringar, **Nytt samtal** och stängknappen. Fältet är en rad
@@ -509,7 +513,9 @@ när du använder rösten:
   mikrofonen redan lyssna lokalt medan du håller knappen.
 - **Lyssnar**: mikrofonen är på, och ingen talar.
 - **Du talar**: staplarna följer hur starkt du talar.
-- **Skyttel arbetar**: Skyttel arbetar med ditt uppdrag.
+- **Arbetar** visas medan Skyttel arbetar med ditt uppdrag. En puls går
+  från vänster till höger. Vid längre arbete ligger strecket sedan stilla
+  bland punkterna.
 - **Skyttel talar**: Skyttel svarar med rösten.
 - **Väntar på ditt svar**: Skyttel har ställt en nödvändig fråga. Rutan
   finns kvar när mikrofonen är av; punkterna blir då nedtonade.
@@ -518,13 +524,19 @@ när du använder rösten:
   från avbrottet om du trycker **Avbryt** under beskedet.
 
 Medan Skyttel arbetar eller talar finns stoppikonen **Avbryt** i
-röstrutan. Den stoppar arbetet och tystar Skyttel. Om mikrofonen är på när
+röstrutan. Vid pågående arbete i en öppen textvy på en telefon finns
+**Avbryt** vid meddelandefältet. När det inte finns något att avbryta visar
+röstrutan en liten ring. Om du talar under pågående arbete visar röstrutan
+**Du talar**. Vid samtidigt tal visas **Skyttel talar**.
+
+**Avbryt** stoppar arbetet och tystar Skyttel. Om mikrofonen är på när
 Skyttel talar kan du börja rättelsen direkt. De första orden visas i
 samtalstexten. Förslag som redan ligger i utkastet finns kvar.
 
 Med minskad rörelse i systemet rör sig
-vågformen inte: den visar sju punkter när ingen hörs och sju stilla
-staplar när någon hörs. En skärmläsare får höra **Lyssnar** när mikrofonen slås
+vågformen inte. Den visar ett streck bland punkterna under arbete, sju
+stilla staplar när någon hörs och sju punkter i vila.
+En skärmläsare får höra **Lyssnar** när mikrofonen slås
 på, **Skyttel arbetar**, **Sparat** och **Mikrofonen är av** när röstrutan
 försvinner. **Väntar på ditt svar** läses inte upp: Skyttel har just sagt frågan.
 

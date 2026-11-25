@@ -134,7 +134,7 @@ test('RÖSTTEXT-01: samma cykel och väntande delar följer med mellan röst och
     await turnMicrophoneOn(page);
     await send(page, 'Berätta om ordningen.');
     await expect.poll(() => held.length).toBe(1);
-    await expect(voiceBox(page)).toHaveText('Skyttel arbetar');
+    await expect(voiceBox(page)).toHaveText('Arbetar');
     await expect(log(page)).toContainText('Skyttel arbetar…');
     await expect(announcement(page)).toBeEmpty();
     await closeConversationText(page);

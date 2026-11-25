@@ -784,6 +784,7 @@ export function useVoice(options: {
               const evidence = output?.evidence;
               if (!active() || !output || !evidence) return;
               if (!evidence.started && !speaker) return;
+              const previousAudibleLength = output.audibleTextLength;
               // A stats read can finish after more transcript has arrived. Spend
               // its frames once, and only on fragments present during the sample.
               while (renderedMs > 0 && evidence.fragments.length) {
@@ -796,10 +797,13 @@ export function useVoice(options: {
                 fragment.from = at;
                 renderedMs -= credit;
                 if (fragment.remainingMs >= 0.001) break;
-                if (speaker) output.audibleTextLength = fragment.textLength;
+                output.audibleTextLength = fragment.textLength;
                 evidence.fragments.shift();
               }
               if (!evidence.fragments.length) output.evidence = undefined;
+              // Receiver stats can finish after activity has already reported silence.
+              if (!speaker && output.audibleTextLength !== previousAudibleLength)
+                checkOutput.current();
             },
             onAudioActivity: (value) => {
               activityRef.current = value;

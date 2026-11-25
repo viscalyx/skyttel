@@ -100,8 +100,7 @@ for (const size of [
         );
         expect((await bounds(view(page))).width).toBe(narrow ? size.width : 400);
         expect((await bounds(view(page))).bottom).toBe(size.height);
-        if (!narrow)
-          expect((await bounds(page.locator('.map-space'))).right).toBe(size.width - 400);
+        expect((await bounds(page.locator('.map-space'))).right).toBe(size.width);
         if (size.mobile || narrow) await expect(field(page)).not.toBeFocused();
         else await expect(field(page)).toBeFocused();
         const draft = view(page).getByRole('button', { name: 'Visa utkastet (1)', exact: true });

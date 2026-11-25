@@ -132,7 +132,7 @@ test('TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare för
     await expect.poll(() => held).toBe(true);
     await closeConversationText(page);
     await openMap(page);
-    await expect(voiceBox(page)).toHaveText('Skyttel arbetar');
+    await expect(voiceBox(page)).toHaveText('Arbetar');
     const stop = voiceBox(page).getByRole('button', { name: 'Avbryt', exact: true });
     const audio = await observeVoiceInterruption(stop, live);
     await stop.click();
@@ -490,7 +490,7 @@ test('TAL-05: samtalstexten håller ihop talet både under samtalet och efter om
     expect(live.requests).toHaveLength(1);
     sendSpeech(live, 'Kontrollera utkastet.', 7500);
     await expect.poll(() => held).toBe(true);
-    await expect(voiceBox(page)).toHaveText('Skyttel arbetar');
+    await expect(voiceBox(page)).toHaveText('Arbetar');
     // A spoken task shows the working row last in the conversation text.
     await expect(log.getByRole('listitem').last()).toHaveText(
       'Skyttel arbetar… Bearbetar uppgiften. Tryck på Escape för att avbryta.',
