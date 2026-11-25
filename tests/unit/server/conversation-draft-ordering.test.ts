@@ -1164,47 +1164,49 @@ test('reset rereads the draft when an earlier batch completes during the reset r
   expect((await map(second)).draft.changes).toEqual([]);
 });
 
-test.each([
-  { endpoint: 'messages', spoken: false },
-  { endpoint: 'new', spoken: false },
-  { endpoint: 'messages', spoken: true },
-] as const)(
-  'a queued $endpoint reset respects the draft after earlier work (spoken=$spoken)',
-  async ({ endpoint, spoken }) => {
-    const { pending: held, release } = heldResponse();
-    let typeId = '';
-    const model = textModel(async (body) => {
-      const input = JSON.parse(
-        String(body.input.findLast((item) => item.role === 'user')?.content),
-      );
-      await held;
-      return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
-    });
-    const first = await arrange(model.provider);
-    typeId = (await map(first)).types[0].id;
-    await seed(first);
-    const second = await conversation();
-    const firstId = await send(first, 'Lägg till Lampan.');
-    await expect.poll(() => model.requests.length).toBe(1);
-    await resetAndDiscard(second, endpoint, spoken);
-    expect((await map(second)).draft.changes).toMatchObject([{ id: 'chair' }]);
-    expect((await read(second)).queuedMessages).toBe(1);
-    expect((await read(second)).discarded).not.toBe(true);
-    expect((await read(second)).reply).not.toContain('Utkastet är tomt');
-    release();
-    expect((await completed(first, firstId)).error).toBeUndefined();
-    await expect.poll(async () => (await read(second)).phase).not.toBe('working');
-    const result = await read(second);
-    if (spoken) {
-      expect(result.error).toBe('assistant_draft_changed');
-      expect((await map(second)).draft.changes).toMatchObject([{ id: 'chair' }, { id: 'lamp' }]);
-    } else {
-      expect(result.discarded).toBe(true);
-      expect((await map(second)).draft.changes).toEqual([]);
-    }
-    expect(model.requests).toHaveLength(1);
-  },
-);
+for (const mode of ['messages', 'new', 'spoken'] as const) {
+  const spoken = mode === 'spoken';
+  const endpoint = spoken ? 'messages' : mode;
+  test(
+    spoken
+      ? 'a queued spoken reset preserves later draft changes from earlier work'
+      : `${endpoint} reset discards after an earlier conversation batch without invalidating it`,
+    async () => {
+      const { pending: held, release } = heldResponse();
+      let typeId = '';
+      const model = textModel(async (body) => {
+        const input = JSON.parse(
+          String(body.input.findLast((item) => item.role === 'user')?.content),
+        );
+        await held;
+        return [proposeObject(input.draft, 'lamp', { typeId, name: 'Lampan' })];
+      });
+      const first = await arrange(model.provider);
+      typeId = (await map(first)).types[0].id;
+      await seed(first);
+      const second = await conversation();
+      const firstId = await send(first, 'Lägg till Lampan.');
+      await expect.poll(() => model.requests.length).toBe(1);
+      await resetAndDiscard(second, endpoint, spoken);
+      expect((await map(second)).draft.changes).toMatchObject([{ id: 'chair' }]);
+      expect((await read(second)).queuedMessages).toBe(1);
+      expect((await read(second)).discarded).not.toBe(true);
+      expect((await read(second)).reply).not.toContain('Utkastet är tomt');
+      release();
+      expect((await completed(first, firstId)).error).toBeUndefined();
+      await expect.poll(async () => (await read(second)).phase).not.toBe('working');
+      const result = await read(second);
+      if (spoken) {
+        expect(result.error).toBe('assistant_draft_changed');
+        expect((await map(second)).draft.changes).toMatchObject([{ id: 'chair' }, { id: 'lamp' }]);
+      } else {
+        expect(result.discarded).toBe(true);
+        expect((await map(second)).draft.changes).toEqual([]);
+      }
+      expect(model.requests).toHaveLength(1);
+    },
+  );
+}
 
 test.each(['messages', 'new'] as const)(
   '%s reset waits for the registered save outcome before discarding',
