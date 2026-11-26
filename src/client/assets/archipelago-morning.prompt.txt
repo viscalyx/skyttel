@@ -1,7 +1,9 @@
 Skärgårdsmorgon
 
 Bildkälla
-Skyttels panorama är skapat med OpenAI ImageGen utifrån följande bildprompt.
+Landskapet, vattnets höjdkarta och färgbilden till vågorna är skapade med
+OpenAI ImageGen. Vattnets speglingar beräknas från landskapet och vågornas
+lutning.
 
 Bildprompt
 Skapa ett fotorealistiskt sfäriskt panorama av en klar morgon i svensk
@@ -24,8 +26,8 @@ speglas brutet i vattnet nära respektive strand. Vid 25 procent av bildens
 bredd syns lugn öppnare fjärd där den låga udden klingar av. Låt mitten förbli
 helt öppen.
 
-Rakt upp övergår morgonhimlen i klar ljusblå zenit. Rakt ner finns små
-rundade, gråblå krusningar med mjuka ljuskanter. Visa vattenytan i alla
+Rakt upp övergår morgonhimlen i klar ljusblå zenit. Rakt ner löper ett fåtal
+låga vågor över nästan blankt, blågrått vatten. Visa vattenytan i alla
 nedåtriktningar med trovärdig polprojektion. Låt samma varma låga morgonljus
 från höger stryka över häll, talltoppar och vatten, med dämpat vattenblänk och
 teckning i skuggorna. Landskapet ska vara tydligt även i ett litet utsnitt men
@@ -117,20 +119,6 @@ ska ansluta till det befintliga panoramat. Leverera bara ett rent
 landskapsfoto i liggande 2:1, högsta tillgängliga upplösning. Fri miljö utan
 text eller byggnader.
 
-Vattenytan rakt nedanför betraktaren
-Skapa ett kvadratiskt, fotorealistiskt fotografi taget RAKT NER mot Östersjöns
-vattenyta strax ovanför vattnet en klar svensk skärgårdsmorgon. Detta är vyn
-lodrätt under betraktaren i ett panorama. Hela bilden är lugn, djup, blågrå
-vattenyta med många små naturligt asymmetriska vindkrusningar som drar snett
-åt samma håll. De svagt välvda vågryggarna återspeglar en ljust blå himmel med
-enstaka små, blekt varma morgonreflexer. Svalare gråblå dalar, mjuka
-övergångar, teckning i skuggorna. Jämn exponering över hela bildytan. Det
-finns ingen ljuspunkt i mitten. Tydlig, fin, fotografisk detalj hos vattnet
-som övergår naturligt i nya krusningar åt alla håll. Kamerans optiska axel är
-vinkelrät mot vattenplanet, utan perspektiv mot någon fjärran horisont. Endast
-vatten; inga stränder, stenar, träd, botten, djur, båtar, föremål, skum eller
-text.
-
 Tallarna på den låga ön, två utsnitt i kartkamerans perspektiv
 
 Gemensam inledning
@@ -163,30 +151,55 @@ grenverk varierar med avståndet. Låt de tunna grenarna, barrtofsarna, graniten
 sprickor och de brutna speglingarna synas i skarpt lågt morgonljus. Behåll den
 tunna låga udden genom hela bilden. Inga andra motiv.
 
-Små krusningar under kameran
-Ett kvadratiskt naturfotografi av själva vattenhuden, exakt lodrätt ner från en
-brygga strax över spegelblanka Östersjön en stilla sommarmorgon. Bryggan är
-utanför bilden. Sensorn är parallell med vattnet. Bilden täcker en och en halv
-meter vatten från kant till kant. Samma skala i varje hörn. Se vattnets djupa
-gråblå och mjukt grågröna ton rakt igenom ytskiktet. Ingen botten syns. En
-mycket svag bris och små återgående vågor från klippor gör vattenhinnan fint
-bucklig med KORTA, MJUKT RUNDADE KRUSNINGAR. Två eller tre olika riktningar
-korsas oregelbundet. En liten ojämn oval ljusfläck eller ett kort bågformat
-streck uppstår då och då där en liten krusning fångar den ljusblå himlen. Det
-finns lugnare, nästan släta utrymmen mellan grupperna av krusningar. Naturligt
-sönderbrutna mjuka kanter, mycket låg våghöjd, fin optisk skärpa. En svag
-diffus morgonreflex ger liv åt ytan. Mjukt ljus och anspråkslösa färger som hos
-vatten i skyddat lä mellan svenska granitöar. Runt tjugo till trettio små
-rundade krusningar ryms längs en bildsida. Detta är ett nära fotografiskt
-studium av lugnt vatten ovanifrån. Undvik helt ett snett perspektiv över havet,
-stora dyningar, utdragna åsar, parallella linjer, vassa vita ränder, skum,
-regndroppsringar, starka glittrande solreflexer och undervattensmönster. Vatten
-från kant till kant utan föremål, skugga från bryggan, trädreflexer eller
-horisont.
+Vågornas höjd
+Den första referensen visar vågorna intill hällen. Den andra visar öppet hav
+från samma panorama, omprojicerat till en vy uppifrån.
+
+Skapa en kvadratisk gråskalig HÖJDKARTA för det lugna havet vid svensk
+ytterskärgård. Det är en ortografisk vy rakt ovanifrån av cirka åtta meter
+vatten i varje riktning. Bild 1 visar önskad typ av låga, mjukt välvda
+vindvågor. Bild 2 visar fotograferade vågor i samma sjö. Använd dem bara för
+vågornas form. Kamerabelysning, himmelsreflexer och färger ska inte finnas i
+höjdkartan. En enda bris blåser vertikalt genom hela kartan. Vågornas krön går
+i stort sett från vänster till höger. De är cirka en halv till en meter från
+varandra, med olika avstånd. Fånga ett enda ögonblick med ojämna, svagt böjda
+och ställvis avbrutna kammar som växer och klingar ut efter ett par meter. Den
+mesta vattenytan mellan dem är bred, jämn och svagt böljande. Några diskreta
+små vindvågor har samma huvudriktning. Ange enbart höjd per pixel, där
+neutralt mellangrått är medelhöjden, något ljusare grått är de låga krönen och
+något mörkare grått är dalarna. Alla vågor är mjukt rundade och ganska flacka.
+Jämnt statistiskt mönster och identisk skala i alla fyra hörn. Vattenfältet
+fortsätter genom kanterna. Hela bilden fylls av höjddata. Utan lampa,
+kastskuggor, blänk, svarta konturlinjer, skum, bubblor, ringar, horisont,
+mark, skala, siffror eller text.
+
+Vattnets färg och ljus
+Den första referensen är höjdkartan. Den andra är färgstudien av lugnt vatten
+rakt uppifrån.
+
+Gör ett fotorealistiskt lodfoto av blågrå Östersjö utifrån bild 1. Bild 1 är
+vattenytans höjdkarta och är den exakta geometrimallen. De ljusa vågkammarna
+och de mörkare dalarna ska ligga på precis samma platser, i samma skala och
+med samma svaga böjar genom hela den kvadratiska bilden. Bild 2 visar den
+önskade fotografiska färgen, det mjuka, låga morgonljuset och de återhållna
+reflexerna. Kameran ser vinkelrätt ner på en enda sammanhängande vattenyta.
+Visa låga långsträckta vindvågor från vänster till höger, glest isär, med lätt
+oregelbundna sidor. Färga de skyddade lugna mellanrummen i djup, lätt
+genomlyst blågrå färg med mycket fin naturtrogen detalj. Bara på den smala
+belysta flanken av några kammar får ett svagt, mjukt brutet pärlgrått eller
+blekt varmt skimmer synas. Efterlikna en riktig svensk naturfotografs stilla
+havsyta. Håll hela motivet i samma skala utan perspektivflykt och utan
+horisont. Vatten ända ut till kanterna. Undvik skum, bubblor, cirklar, vita
+band, skarpa svarta konturer och botten. Återge befintlig vattengeometri och
+ändra bara dess material och ljus.
 
 Inpassning i panoramat
 De två vyerna av udden projiceras tillbaka till sina ursprungliga riktningar.
-Vattenbilden läggs på ett horisontellt plan under kameran. De små krusningarna
-syns tydligast rakt nedanför kameran. Mot horisonten tar speglingarna från
-himlen och stränderna gradvis över.
 Himlens blå ton övergår i en jämn färg kring zenit.
+
+Höjd och färg läses på samma plats på ett horisontellt vattenplan. Vågorna har
+en gemensam vindriktning, omkring 25 grader åt höger från startvyn mot öppet
+hav. Några mindre vågor avviker svagt från brisen. Vågornas lutning avgör var
+morgonhimlen och stränderna speglas. Rakt nedanför kameran syns låga, mjukt
+belysta vågkammar med blankt vatten emellan. Vid strandlinjen och längst ut
+vid horisonten bevaras detaljerna från landskapsbilden.

@@ -389,7 +389,9 @@ Med **Skärgårdsmorgon** i ljust tema ser du öppet hav från en plats strax
 ovanför vattnet. Vrid blicken ett kvarts varv åt höger för att se en
 solbelyst granithäll.
 Bakom dig löper ett smalt sund mellan en ö med höga, täta tallar och en låg
-udde med glesa tallar. Titta upp mot morgonhimlen eller ner på krusningarna.
+udde med glesa tallar. Tittar du upp ser du morgonhimlen. Rakt ner ser du
+några låga vågor med blankt vatten emellan. Vågorna följer samma vind över
+hela fjärden, så du ser dem från sidan när du vrider dig mot granithällen.
 När du panorerar förskjuts vattnet närmast dig medan horisonten ligger kvar.
 
 Atmosfär har mjuka mörka ljusfält; Dis och ljuspunkter har mörkt dis och
