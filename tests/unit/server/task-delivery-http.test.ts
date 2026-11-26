@@ -250,7 +250,7 @@ test.each(['text', 'voice'] as const)(
     expect(later.tasks[1].delivery.text).toContain('Andra svaret.');
     expect(later.conversation).toEqual([
       ...first.conversation,
-      { role: 'assistant', text: 'Andra svaret.' },
+      { role: 'assistant', text: 'Andra svaret.', requestId: 'second' },
     ]);
   },
 );

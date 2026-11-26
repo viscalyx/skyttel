@@ -144,8 +144,7 @@ test.each([390, 1600])(
     await userEvent.click(screen.getByRole('button', { name: rows[1].title }));
     expect(openRetained).toHaveBeenCalledWith(rows[1].id);
     expect(toggle.getAttribute('aria-expanded')).toBe(String(width === 1600));
-    if (width === 390)
-      expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Text' }));
+    if (width === 390) expect(document.activeElement).toBe(toggle);
     expect((screen.getByLabelText('Meddelande till Skyttel') as HTMLTextAreaElement).value).toBe(
       'Mitt osända meddelande',
     );

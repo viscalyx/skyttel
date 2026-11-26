@@ -103,11 +103,11 @@ test('an interruption keeps an early correction together and a retry keeps the n
   output('reply-end', 'cykel?', 180, 200);
 
   expect(transcript.mock.calls).toEqual([
-    ['assistant', 'Det gamla svaret.', true],
-    ['user', 'Jag menar ', true],
-    ['user', 'cykeln.', false],
-    ['assistant', 'Vilken ', true],
-    ['assistant', 'cykel?', false],
+    ['assistant', 'Det gamla svaret.', true, 'previous'],
+    ['user', 'Jag menar ', true, 'early'],
+    ['user', 'cykeln.', false, 'correction'],
+    ['assistant', 'Vilken ', true, 'reply-start'],
+    ['assistant', 'cykel?', false, 'reply-end'],
   ]);
 });
 

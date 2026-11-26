@@ -545,8 +545,9 @@ test.each([false, true])(
       text,
       queue: true,
     });
+    const originalRequest = body(instruction);
     try {
-      expect((await post(`${path}/${state.id}/messages`, body(instruction))).status()).toBe(202);
+      expect((await post(`${path}/${state.id}/messages`, originalRequest)).status()).toBe(202);
       await expect.poll(() => model.requests.length).toBe(1);
       app.setConversationConsentTextVersion(4);
       const refused = await post(`${path}/${state.id}/messages`, body('Ett nytt uppdrag.'));
@@ -561,8 +562,12 @@ test.each([false, true])(
         .toBe('ready');
       expect(state.consentTextVersion).toBe(3);
       expect(state.conversation).toEqual([
-        { role: 'user', text: instruction },
-        { role: 'assistant', text: 'Det gamla arbetet är klart under sina ursprungliga villkor.' },
+        { role: 'user', text: instruction, requestId: originalRequest.requestId },
+        {
+          role: 'assistant',
+          text: 'Det gamla arbetet är klart under sina ursprungliga villkor.',
+          requestId: originalRequest.requestId,
+        },
       ]);
       if (approved) {
         const acceptance = await post(`${root}/conversation-consent`, { textVersion: 4 });

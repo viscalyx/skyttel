@@ -409,7 +409,11 @@ test.each(['canceled', 'incomplete'] as const)(
         paused: true,
         error: 'assistant_task_expired',
       });
-      expect(retained.conversation).toContainEqual({ role: 'user', text: 'Läs bara Lina.' });
+      expect(retained.conversation).toContainEqual({
+        role: 'user',
+        text: 'Läs bara Lina.',
+        requestId: 'read-lina',
+      });
       expect(retained.expiresAt).toBeGreaterThan(clock);
     }
   },

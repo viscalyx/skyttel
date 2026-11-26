@@ -854,11 +854,11 @@ test('the draft table exposes every change, free properties, type edits and rela
   expect(compact.textContent).toContain('Namn: Använder → Delad användning');
   expect(review.getAllByRole('row')).toHaveLength(14);
   const removed = within(review.getByRole('row', { name: /Dubblett/ }));
-  expect(removed.getByText('Ta bort')).toBeDefined();
+  expect(removed.getByText('Tas bort')).toBeDefined();
   const added = within(
     review.getByRole('rowheader', { name: 'Oklar cykel' }).closest('tr') as HTMLElement,
   );
-  expect(added.getByText('Lägg till')).toBeDefined();
+  expect(added.getByText('Läggs till')).toBeDefined();
   expect(compact.textContent).toContain('alex → använder → none-bike');
   expect(compact.textContent).toContain('alex → använder → Oklar cykel');
   expect(compact.textContent).toContain('alex → använder → unresolved-bike');
