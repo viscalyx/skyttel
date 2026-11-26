@@ -61,7 +61,7 @@
     "@openai/agents": "0.22.0",
     "better-auth": "^1.7.27",
     "better-sqlite3": "13.2.0",
-    "hono": "^4.13.19",
+    "hono": "^4.13.21",
     "js-tiktoken": "1.0.21",
     "langsmith": "0.13.1",
     "openai": "^7.62.0",
