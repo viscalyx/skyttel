@@ -100,6 +100,59 @@ test('retained rows expose selection, blocked switching, read errors and unsucce
   expect(onSelected).toHaveBeenCalledOnce();
 });
 
+test('a failed deletion keeps the selected conversation ready for an explicit retry', async () => {
+  const { result } = await conversationCommands(() => undefined);
+  const user = userEvent.setup();
+  let finishDeletion!: (error: string) => void;
+  const deleteRetained = vi
+    .fn<(id: string) => Promise<string | undefined>>()
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishDeletion = resolve;
+        }),
+    )
+    .mockResolvedValueOnce(undefined);
+  const view = (busy: boolean) => (
+    <ConversationList
+      id="conversations"
+      conversation={{
+        ...result.current,
+        retainedConversations: [rows[0], { ...rows[1], busy }],
+        listRetained: async () => {},
+        deleteRetained,
+      }}
+      onSelected={vi.fn()}
+    />
+  );
+  const list = render(view(true));
+  await user.click(screen.getByRole('button', { name: `Ta bort samtalet: ${rows[1].title}` }));
+  const dialog = screen.getByRole('dialog', { name: 'Ta bort samtal?' });
+  const controls = within(dialog);
+  const confirm = controls.getByRole<HTMLButtonElement>('button', { name: 'Ta bort' });
+  const cancel = controls.getByRole<HTMLButtonElement>('button', { name: 'Avbryt' });
+  expect(controls.getByRole('status').textContent).toContain('Vänta tills det är klart.');
+  expect(confirm.disabled).toBe(true);
+
+  list.rerender(view(false));
+  await user.click(confirm);
+  expect(controls.getByRole('status').textContent).toBe('Tar bort samtalet…');
+  expect(confirm.disabled).toBe(true);
+  expect(cancel.disabled).toBe(true);
+  expect(fireEvent(dialog, new Event('cancel', { cancelable: true }))).toBe(false);
+  expect(deleteRetained).toHaveBeenCalledExactlyOnceWith(rows[1].id);
+
+  const error = 'Samtalet kunde inte tas bort. Försök igen.';
+  finishDeletion(error);
+  expect((await controls.findByRole('alert')).textContent).toBe(error);
+  expect(controls.getByText(rows[1].title)).toBeDefined();
+  expect(confirm.disabled).toBe(false);
+  expect(cancel.disabled).toBe(false);
+  await user.click(confirm);
+  expect(deleteRetained.mock.calls).toEqual([[rows[1].id], [rows[1].id]]);
+  expect(screen.queryByRole('dialog', { name: 'Ta bort samtal?' })).toBeNull();
+});
+
 test.each([390, 1600])(
   'switching panels and selecting a conversation at %i pixels preserves unsent text',
   async (width) => {
