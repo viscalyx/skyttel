@@ -1,85 +1,73 @@
 ---
 name: resolve-dependency-drift
-description: Resolve a detector-created dependency drift issue for the npm toolchain, a coordinated release toolchain, or a container image, including every synchronized repository surface and required compatibility work. Use when an `automation:dependency-drift` issue provides a maintenance unit with current and available state.
+description: >-
+  Resolve a dependency drift ticket for a toolchain or container image.
+  Assess container scan results, recheck remediation tickets, and verify
+  selected fixes or scoped exceptions.
+argument-hint: "[drift ticket | remediation ticket | scan or CI evidence]"
 disable-model-invocation: true
 ---
 
 # Resolve Dependency Drift
 
-## Workflow
+## Choose the path
 
-1. Read the issue's maintenance unit, current state, available state, and
-   completion checklist.
-2. Create one isolated directory with
-   `mktemp -d /tmp/resolve-dependency-drift.XXXXXX`.
-3. Start a background agent with `$research`.
-   - For npm, research compatibility, lifecycle-script policy, install paths,
-     and verification using primary npm and Node sources.
-   - For a container image, research vendor releases, compatibility,
-     immutable identity, synchronized surfaces, and verification using primary
-     registry and vendor sources.
-   - For a release toolchain such as Lychee, research the supported release,
-     action compatibility, release assets, published digests, and every
-     synchronized installer and CI surface using primary project sources.
-   - Override `$research` output handling for this invocation: write its single
-     Markdown result inside the exact temporary directory, never in the
-     repository.
-4. Continue repository discovery while research runs. Read and apply the
-   temporary findings before choosing the target or editing.
-5. Apply the policy for the issue's maintenance unit:
-   - **npm toolchain:** Treat root `package.json` as canonical. Adopt one exact
-     reviewed npm version across every dynamically discovered install path.
-     Preserve pinned script approvals, explicit denials, fail-closed lifecycle
-     policy, and LTS Node compatibility.
-   - **Container image:** Resolve the requested upstream tag, multi-platform
-     index when published, and Linux AMD64 platform manifest. For
-     `devcontainer-base`, record the index digest as `manifestDigest` and the
-     AMD64 image config digest as `imageId`. For other image lanes, preserve
-     their existing identity policy. Update every dynamically discovered
-     synchronized surface without changing release-lane policy.
-   - **Lychee toolchain:** Update both installer version constants, the CI
-     `lycheeVersion`, and both AMD64 and ARM64 asset checksums together. Keep
-     the action compatible and pinned to a full commit SHA with its release-tag
-     comment, and preserve relational alignment coverage.
-6. Update focused tests, generated locks or configuration, the maintenance
-   coverage invariant, and affected operator, developer, or CI documentation.
-7. Run dynamically relevant verification:
-   - For npm, include clean installs, pending script approval checks, nested
-     packages, `npm run check`, and `npm audit`.
-   - For a container image, include image, release, smoke, workflow, and
-     repository checks.
-   - For Lychee, include the dependency-drift, dependency-maintenance, workflow
-     security, Markdown link, and repository checks relevant to the change.
-8. Confirm a detector scan reports no remaining drift for the maintenance
-   unit.
-9. Remove only the exact temporary directory created in step 2 after applying
-   its findings.
+- **Drift ticket:** Read its maintenance unit, current and available state,
+  and completion checklist. Find the unit in the repository's dependency
+  maintenance configuration. Read the [toolchain update](references/toolchain-update.md)
+  or [container image update](references/image-update.md) for that unit.
+- **Remediation ticket:** [Recheck the ticket](references/remediation.md#recheck-existing-tickets)
+  against the relevant upstream image. Assess scan findings when a fix is
+  still needed. Read [exception maintenance](references/exceptions.md) for
+  a scoped exception review or change.
+- **Scan evidence or CI job:** Bind the supplied evidence to its exact image
+  and source commit. [Assess the selected image](references/remediation.md#assess-scanned-findings)
+  whether the gate passes or blocks.
 
-## Guardrails
+Discover the affected surfaces and change only the requested maintenance unit
+or remediation scope. For container work, use the canonical gate supplied by
+the caller or declared by the repository. If neither identifies it, find the
+likely command or workflow, show it to the user, and wait for confirmation
+before using it.
 
-- Discover surfaces dynamically; do not rely on an issue file inventory.
-- Change only the maintenance unit named by the issue.
-- Resolve compatibility work instead of evading the available supported
-  release.
-- Never use floating versions for project-bound npm dependencies or the
-  canonical npm toolchain.
-- Preserve ADR 0045 rolling channels such as `@github/copilot@latest` for
-  standalone development tools when their distribution integrity is verified
-  or ADR 0045 records an explicit exception. Do not replace those channels with
-  routine version pins.
-- Keep externally sourced service and base images on their lane's explicit
-  identity policy. UBI permits `latest` only with its selected SHA-256 digest;
-  other lanes require a non-`latest` tag. Repository-local build outputs do
-  not require an explicit Compose `image` or canonical image lock.
-- Preserve each image lane's identity policy. Production and release
-  references keep their required immutable identities. ADR 0045 development
-  references backed by canonical image locks stay explicit, non-`latest`,
-  tag-only references; do not append digests to those runtime references.
-- For an ADR 0045 development image update, record the required manifest digest
-  and image ID in the canonical image lock and update every synchronized
-  development tag reference from that lock. Keep the devcontainer base lock's
-  `manifestDigest` bound to the multi-platform index, not one platform
-  manifest.
-- Never approve all lifecycle scripts or update an image lock tag without its
-  required immutable identities.
-- Do not leave research artifacts in the repository.
+## Verify and decide
+
+- For containers, [resolve the image to check](references/image-update.md#resolve-the-upstream-candidate)
+  before running a scan or testing fixes. Test available fixes in isolation
+  before presenting a remediation decision. Get approval for the exact
+  remediation before changing release packaging. For an override, get one
+  approval for the record and its tracking ticket using the
+  [override criteria](references/exceptions.md#change-the-record). Leave
+  branch publication, PRs, and other ticket mutations to a separate workflow.
+- Apply selected changes locally. After changing a package or image, use
+  [remediation verification](references/remediation.md#verify-and-record).
+- For a drift ticket, run the detector's read-only check and report any
+  remaining drift. Use the repository's documented entry point or lookup
+  functions when its detector also writes issues. Keep detector reconciliation
+  separate from remediation ticket closure.
+
+## Deliver the result
+
+For every container path, use this step before sending the final chat reply,
+including when the workflow stops for approval.
+
+1. Lead with the recommended remediation and why. Give the gate and runtime
+   results for the candidate and any test build separately. Say which
+   blockers the change clears or leaves, whether an exception is needed,
+   and what to check next. Report the detector result for a drift ticket.
+   Say `Evidence is missing or inconclusive` when it prevents a conclusion.
+   Mark any production digest unverified unless deployment evidence
+   confirms it.
+2. Include the complete finding report in the final reply unless the user
+   explicitly requests a summary. Use the [finding report](references/finding-report.md)
+   for scope, field and entry order, and scanner totals. Link the retained
+   report and scanner evidence after the entries when available.
+3. When approval is needed, name the exact change and ask the user directly
+   whether to apply it. Wait for the decision before adopting it.
+4. Before sending, check the actual reply against the reviewed checklist.
+   Unless the user explicitly requested a summary, match every in-scope
+   finding by image, advisory, and affected package copy to a reply entry
+   with all five fields in order. Confirm the reply includes the recommendation
+   and reason, gate and runtime results, exception need, next check, and
+   approval question when applicable. Add missing entries or details before
+   sending.
